@@ -9,17 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PrivilegesRouteImport } from './routes/privileges'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 
-const PrivilegesRoute = PrivilegesRouteImport.update({
-  id: '/privileges',
-  path: '/privileges',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -40,20 +36,32 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
-  '/privileges': typeof PrivilegesRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
-  '/privileges': typeof PrivilegesRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,20 +69,28 @@ export interface FileRoutesById {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
-  '/privileges': typeof PrivilegesRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/a-propos' | '/collection' | '/contact' | '/privileges'
+  fullPaths:
+    | '/'
+    | '/a-propos'
+    | '/collection'
+    | '/contact'
+    | '/admin/login'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/a-propos' | '/collection' | '/contact' | '/privileges'
+  to: '/' | '/a-propos' | '/collection' | '/contact' | '/admin/login' | '/admin'
   id:
     | '__root__'
     | '/'
     | '/a-propos'
     | '/collection'
     | '/contact'
-    | '/privileges'
+    | '/admin/login'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -82,18 +98,12 @@ export interface RootRouteChildren {
   AProposRoute: typeof AProposRoute
   CollectionRoute: typeof CollectionRoute
   ContactRoute: typeof ContactRoute
-  PrivilegesRoute: typeof PrivilegesRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/privileges': {
-      id: '/privileges'
-      path: '/privileges'
-      fullPath: '/privileges'
-      preLoaderRoute: typeof PrivilegesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -122,6 +132,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -130,7 +154,8 @@ const rootRouteChildren: RootRouteChildren = {
   AProposRoute: AProposRoute,
   CollectionRoute: CollectionRoute,
   ContactRoute: ContactRoute,
-  PrivilegesRoute: PrivilegesRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
