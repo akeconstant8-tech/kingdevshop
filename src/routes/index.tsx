@@ -37,7 +37,7 @@ function Home() {
             <h1 className="brand-wordmark mt-6 text-5xl leading-[1.05] sm:text-6xl lg:text-7xl xl:text-8xl">
               KING DEV SHOP
             </h1>
-            <p className="mt-6 max-w-lg text-lg text-foreground/80 font-medium">
+            <p className="slogan-animated mt-6 max-w-lg font-display text-2xl sm:text-3xl font-semibold italic">
               Un sommeil doux et réparateur avec King Dev Shop.
             </p>
             <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">

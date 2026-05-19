@@ -2,13 +2,13 @@
 @source "../src";
 @import "tw-animate-css";
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: 'Cinzel', serif;
-  --font-sans: 'Manrope', sans-serif;
+  --font-display: 'Playfair Display', serif;
+  --font-sans: 'Inter', sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -94,9 +94,29 @@
 .brand-wordmark {
   font-family: var(--font-display);
   font-weight: 800;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   background: var(--gradient-royal);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Slogan animation */
+@keyframes sloganReveal {
+  0% { opacity: 0; transform: translateY(12px); letter-spacing: 0.4em; filter: blur(4px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0); letter-spacing: 0.02em; filter: blur(0); }
+}
+@keyframes sloganShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.slogan-animated {
+  display: inline-block;
+  background: linear-gradient(90deg, #1E90FF 0%, #4FA8FF 25%, #1E90FF 50%, #4FA8FF 75%, #1E90FF 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sloganReveal 1.2s ease-out both, sloganShimmer 6s linear infinite 1.2s;
 }
