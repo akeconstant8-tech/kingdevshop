@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Crown } from "lucide-react";
+import logo from "@/assets/logo-kingdevshop.png";
 
 export function SiteFooter() {
   return (
@@ -8,18 +8,16 @@ export function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-primary-foreground/30">
-                <Crown className="h-5 w-5" strokeWidth={1.5} />
-              </span>
-              <span className="font-display text-xl font-semibold">King Dev Shop</span>
+              <img src={logo} alt="King Dev Shop" className="h-12 w-12 object-contain brightness-0 invert" />
+              <span className="font-display text-2xl font-extrabold tracking-[0.18em]">KING DEV SHOP</span>
             </div>
-            <p className="mt-6 max-w-md font-display italic text-lg text-primary-foreground/80">
-              « Un sommeil doux et réparateur avec King Dev Shop. »
+            <p className="mt-6 max-w-md text-base text-primary-foreground/85">
+              Un sommeil doux et réparateur avec King Dev Shop.
             </p>
           </div>
           <div>
             <h4 className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">Navigation</h4>
-            <ul className="mt-4 space-y-2 text-sm text-primary-foreground/75">
+            <ul className="mt-4 space-y-2 text-sm text-primary-foreground/80">
               <li><Link to="/" className="hover:text-primary-foreground">Accueil</Link></li>
               <li><Link to="/collection" className="hover:text-primary-foreground">Collection</Link></li>
               <li><Link to="/contact" className="hover:text-primary-foreground">Contact</Link></li>
@@ -28,7 +26,7 @@ export function SiteFooter() {
           </div>
           <div>
             <h4 className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">Contact</h4>
-            <ul className="mt-4 space-y-2 text-sm text-primary-foreground/75">
+            <ul className="mt-4 space-y-2 text-sm text-primary-foreground/80">
               <li>contact@kingdevshop.com</li>
               <li>WhatsApp : +225 07 11 25 76 55</li>
               <li>Bonoua, Carrefour 8 kilos</li>

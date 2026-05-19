@@ -2,13 +2,13 @@
 @source "../src";
 @import "tw-animate-css";
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: 'Playfair Display', serif;
-  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Cinzel', serif;
+  --font-sans: 'Manrope', sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -38,14 +38,13 @@
 
 :root {
   --radius: 0.5rem;
-  /* White background */
   --background: oklch(1 0 0);
   --foreground: oklch(0.2 0.05 250);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.2 0.05 250);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.05 250);
-  /* Primary: DodgerBlue (#1E90FF) */
+  /* DodgerBlue */
   --primary: oklch(0.65 0.19 250);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.96 0.02 250);
@@ -74,7 +73,7 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
   }
-  h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: 0.02em; font-weight: 700; }
 }
 
 /* Floating sheet emoticons */
@@ -89,4 +88,15 @@
   animation: floatY 6s ease-in-out infinite;
   pointer-events: none;
   user-select: none;
+}
+
+/* Brand wordmark */
+.brand-wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  background: var(--gradient-royal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
