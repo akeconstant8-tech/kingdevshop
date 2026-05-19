@@ -19,7 +19,7 @@ export const Route = createFileRoute("/collection")({
 function Collection() {
   const fetchFn = useServerFn(listProducts);
   const { data: products = [], isLoading } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn() });
-  const { add } = useCart();
+  const { add, setOpen: setCartOpen } = useCart();
   const [active, setActive] = useState<string>("Tous");
 
   const filters = useMemo<string[]>(() => ["Tous", ...Array.from(new Set(products.map((p: Product) => p.collection)))], [products]);
