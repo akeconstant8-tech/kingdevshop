@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 text-gold">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-primary-foreground/30">
                 <Crown className="h-5 w-5" strokeWidth={1.5} />
               </span>
               <span className="font-display text-xl font-semibold">King Dev Shop</span>
@@ -18,17 +18,16 @@ export function SiteFooter() {
             </p>
           </div>
           <div>
-            <h4 className="text-xs uppercase tracking-[0.25em] text-gold">Navigation</h4>
+            <h4 className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">Navigation</h4>
             <ul className="mt-4 space-y-2 text-sm text-primary-foreground/75">
-              <li><Link to="/" className="hover:text-gold">Accueil</Link></li>
-              <li><Link to="/collection" className="hover:text-gold">Collection</Link></li>
-              <li><Link to="/contact" className="hover:text-gold">Contact</Link></li>
-              <li><Link to="/a-propos" className="hover:text-gold">À propos</Link></li>
-              <li><Link to="/privileges" className="hover:text-gold">Privilèges</Link></li>
+              <li><Link to="/" className="hover:text-primary-foreground">Accueil</Link></li>
+              <li><Link to="/collection" className="hover:text-primary-foreground">Collection</Link></li>
+              <li><Link to="/contact" className="hover:text-primary-foreground">Contact</Link></li>
+              <li><Link to="/a-propos" className="hover:text-primary-foreground">À propos</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-xs uppercase tracking-[0.25em] text-gold">Contact</h4>
+            <h4 className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">Contact</h4>
             <ul className="mt-4 space-y-2 text-sm text-primary-foreground/75">
               <li>contact@kingdevshop.com</li>
               <li>+225 07 00 00 00 00</li>
@@ -38,7 +37,7 @@ export function SiteFooter() {
         </div>
         <div className="mt-14 border-t border-primary-foreground/10 pt-6 text-xs text-primary-foreground/50 flex flex-col md:flex-row justify-between gap-2">
           <span>© {new Date().getFullYear()} King Dev Shop. Tous droits réservés.</span>
-          <span className="tracking-wider">CONFECTIONNÉ AVEC SOIN</span>
+          <Link to="/admin/login" className="hover:text-primary-foreground tracking-wider">ESPACE ADMIN</Link>
         </div>
       </div>
     </footer>

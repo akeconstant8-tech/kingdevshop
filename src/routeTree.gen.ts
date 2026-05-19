@@ -9,17 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PrivilegesRouteImport } from './routes/privileges'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
 
-const PrivilegesRoute = PrivilegesRouteImport.update({
-  id: '/privileges',
-  path: '/privileges',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -46,14 +40,12 @@ export interface FileRoutesByFullPath {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
-  '/privileges': typeof PrivilegesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
-  '/privileges': typeof PrivilegesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,20 +53,13 @@ export interface FileRoutesById {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
-  '/privileges': typeof PrivilegesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/a-propos' | '/collection' | '/contact' | '/privileges'
+  fullPaths: '/' | '/a-propos' | '/collection' | '/contact'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/a-propos' | '/collection' | '/contact' | '/privileges'
-  id:
-    | '__root__'
-    | '/'
-    | '/a-propos'
-    | '/collection'
-    | '/contact'
-    | '/privileges'
+  to: '/' | '/a-propos' | '/collection' | '/contact'
+  id: '__root__' | '/' | '/a-propos' | '/collection' | '/contact'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -82,18 +67,10 @@ export interface RootRouteChildren {
   AProposRoute: typeof AProposRoute
   CollectionRoute: typeof CollectionRoute
   ContactRoute: typeof ContactRoute
-  PrivilegesRoute: typeof PrivilegesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/privileges': {
-      id: '/privileges'
-      path: '/privileges'
-      fullPath: '/privileges'
-      preLoaderRoute: typeof PrivilegesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -130,8 +107,17 @@ const rootRouteChildren: RootRouteChildren = {
   AProposRoute: AProposRoute,
   CollectionRoute: CollectionRoute,
   ContactRoute: ContactRoute,
-  PrivilegesRoute: PrivilegesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
