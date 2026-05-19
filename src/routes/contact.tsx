@@ -27,8 +27,8 @@ function Contact() {
         <ul className="mt-10 space-y-5">
           {[
             { icon: Mail, label: "contact@kingdevshop.com" },
-            { icon: Phone, label: "+225 07 00 00 00 00" },
-            { icon: MapPin, label: "Cocody — Abidjan, Côte d'Ivoire" },
+            { icon: Phone, label: "+225 07 11 25 76 55 (WhatsApp commandes)" },
+            { icon: MapPin, label: "Bonoua, Carrefour 8 kilos — Côte d'Ivoire" },
           ].map((i) => (
             <li key={i.label} className="flex items-center gap-4">
               <span className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/30 text-gold">
