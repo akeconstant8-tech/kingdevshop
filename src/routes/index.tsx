@@ -129,6 +129,41 @@ function Home() {
           ))}
         </div>
       </section>
+
+      {/* TESTIMONIALS PREVIEW */}
+      <section className="mx-auto max-w-7xl px-6 py-24 lg:px-10">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <span className="text-xs uppercase tracking-[0.3em] text-primary">Témoignages</span>
+            <h2 className="mt-3 font-display text-4xl sm:text-5xl">Ils nous font confiance</h2>
+          </div>
+          <Link to="/temoignages" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider hover:text-primary">
+            Voir tous les témoignages <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { name: "Peniel Djimi", text: "Shalom Homme de Dieu, j'ai reçu le colis, les couleurs sont bien jolies, je suis satisfaite." },
+            { name: "Kelly Kouame", text: "...l'expédition qui est arrivé à Bouaké et tout y est à l'intérieur encore merci pour la considération et la confiance." },
+            { name: "Pierre Ettien", text: "J'ai été livré. Si je rentre, je te fais un retour sur la qualité. Shalom." },
+          ].map((t) => (
+            <div key={t.name} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex gap-1 mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                ))}
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground italic">"{t.text}"</p>
+              <div className="mt-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
+                  {t.name.charAt(0)}
+                </div>
+                <p className="text-sm font-semibold">{t.name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </>
   );
 }
