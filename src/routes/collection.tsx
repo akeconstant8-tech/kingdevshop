@@ -71,12 +71,20 @@ function Collection() {
                 </div>
                 {p.material && <p className="mt-1 text-sm text-muted-foreground">{p.material}</p>}
                 {p.description && <p className="mt-2 text-sm text-muted-foreground/80">{p.description}</p>}
-                <button
-                  onClick={() => add(p)}
-                  className="mt-4 w-full rounded-full border border-primary py-3 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
-                >
-                  🛏️ Ajouter au panier
-                </button>
+                <div className="mt-4 flex flex-col gap-2">
+                  <button
+                    onClick={() => add(p)}
+                    className="w-full rounded-full border border-primary py-3 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+                  >
+                    🛒 Ajouter au panier
+                  </button>
+                  <button
+                    onClick={() => { add(p); setCartOpen(true); }}
+                    className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition hover:translate-y-[-1px]"
+                  >
+                    ⚡ Commander
+                  </button>
+                </div>
               </div>
             </article>
           ))}
