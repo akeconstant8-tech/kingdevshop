@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import heroBed from "@/assets/hero-bed.jpg";
 import logo from "@/assets/logo-kingdevshop.png";
 import { listProducts, type Product } from "@/lib/products.functions";
-import { ArrowRight, Sparkles, ShieldCheck, Truck } from "lucide-react";
+import { ArrowRight, Sparkles, ShieldCheck, Truck, Star } from "lucide-react";
 import { ProductImage } from "@/components/ProductImage";
 
 export const Route = createFileRoute("/")({
