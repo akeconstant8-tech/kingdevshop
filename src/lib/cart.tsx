@@ -24,8 +24,8 @@ type CartCtx = {
 const Ctx = createContext<CartCtx | null>(null);
 const STORAGE_KEY = "kds_cart_v1";
 
-// WhatsApp number — change here if needed. Format: international, no + or spaces.
-export const WHATSAPP_NUMBER = "2250700000000";
+// WhatsApp number — format international, sans + ni espaces.
+export const WHATSAPP_NUMBER = "2250711257655";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -73,10 +73,18 @@ export function useCart() {
   return c;
 }
 
-export function buildWhatsAppLink(items: CartItem[], total: number) {
+export type CustomerInfo = { name: string; phone: string; address: string };
+
+export function buildWhatsAppLink(items: CartItem[], total: number, customer: CustomerInfo) {
   const lines = [
     "*Nouvelle commande — King Dev Shop* 🛏️",
     "",
+    "*Client :*",
+    `• Nom : ${customer.name}`,
+    `• Téléphone : ${customer.phone}`,
+    `• Adresse de livraison : ${customer.address}`,
+    "",
+    "*Articles :*",
     ...items.map((i) => `• ${i.name} × ${i.qty} — ${(i.price * i.qty).toLocaleString("fr-FR")} FCFA`),
     "",
     `*Total : ${total.toLocaleString("fr-FR")} FCFA*`,
