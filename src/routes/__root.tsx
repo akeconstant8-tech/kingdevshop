@@ -9,8 +9,6 @@ import {
 import appCss from "../styles.css?url";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { CartProvider } from "@/lib/cart";
-import { CartDrawer } from "@/components/CartDrawer";
 
 function NotFoundComponent() {
   return (
@@ -45,8 +43,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "King Dev Shop — Linge de lit royal" },
       { name: "description", content: "Un sommeil doux et réparateur avec King Dev Shop. Draps haut de gamme en coton égyptien, satin et percale." },
       { property: "og:title", content: "King Dev Shop — Linge de lit royal" },
-      { property: "og:description", content: "Un sommeil doux et réparateur avec King Dev Shop." },
+      { property: "og:description", content: "Un sommeil doux et réparateur avec King Dev Shop. Draps haut de gamme en coton égyptien, satin et percale." },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "King Dev Shop — Linge de lit royal" },
+      { name: "twitter:description", content: "Un sommeil doux et réparateur avec King Dev Shop. Draps haut de gamme en coton égyptien, satin et percale." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5a7b30f7-89d9-4a9b-a806-2d2c1f5a993b/id-preview-e6d10998--0d2e111c-1bb7-4a15-834b-e3f42fc39737.lovable.app-1779206063196.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5a7b30f7-89d9-4a9b-a806-2d2c1f5a993b/id-preview-e6d10998--0d2e111c-1bb7-4a15-834b-e3f42fc39737.lovable.app-1779206063196.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -69,14 +72,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <div className="flex min-h-screen flex-col">
-          <SiteHeader />
-          <main className="flex-1"><Outlet /></main>
-          <SiteFooter />
-          <CartDrawer />
-        </div>
-      </CartProvider>
+      <div className="flex min-h-screen flex-col">
+        <SiteHeader />
+        <main className="flex-1"><Outlet /></main>
+        <SiteFooter />
+      </div>
     </QueryClientProvider>
   );
 }
