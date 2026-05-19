@@ -127,6 +127,20 @@ function Home() {
                 </div>
                 <span className="text-sm font-semibold whitespace-nowrap text-primary">{Number(p.price).toLocaleString("fr-FR")} FCFA</span>
               </div>
+              <div className="mt-3 flex flex-col gap-2">
+                <button
+                  onClick={() => add(p)}
+                  className="w-full rounded-full border border-primary py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  🛒 Ajouter au panier
+                </button>
+                <button
+                  onClick={() => { add(p); setCartOpen(true); }}
+                  className="w-full rounded-full bg-primary py-2.5 text-xs font-semibold uppercase tracking-wider text-primary-foreground shadow-[var(--shadow-soft)] transition hover:translate-y-[-1px]"
+                >
+                  ⚡ Commander
+                </button>
+              </div>
             </article>
           ))}
         </div>
