@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listProducts, type Product } from "@/lib/products.functions";
 import { ProductImage } from "@/components/ProductImage";
 import { useMemo, useState } from "react";
+import { useCart } from "@/lib/cart";
 
 export const Route = createFileRoute("/collection")({
   head: () => ({

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Crown, ShoppingBag } from "lucide-react";
 import { useState } from "react";
+import { useCart } from "@/lib/cart";
 
 const nav = [
   { to: "/", label: "Accueil" },
@@ -11,6 +12,7 @@ const nav = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const { count, setOpen: setCartOpen } = useCart();
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
@@ -40,9 +42,18 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <button className="hidden sm:flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium hover:border-primary transition-colors">
+          <button
+            onClick={() => setCartOpen(true)}
+            className="relative flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium hover:border-primary transition-colors"
+            aria-label="Ouvrir le panier"
+          >
             <ShoppingBag className="h-4 w-4" />
-            Panier
+            <span className="hidden sm:inline">Panier</span>
+            {count > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                {count}
+              </span>
+            )}
           </button>
           <button onClick={() => setOpen(!open)} className="lg:hidden text-sm font-medium">
             {open ? "Fermer" : "Menu"}
