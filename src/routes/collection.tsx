@@ -19,6 +19,7 @@ export const Route = createFileRoute("/collection")({
 function Collection() {
   const fetchFn = useServerFn(listProducts);
   const { data: products = [], isLoading } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn() });
+  const { add } = useCart();
   const [active, setActive] = useState<string>("Tous");
 
   const filters = useMemo<string[]>(() => ["Tous", ...Array.from(new Set(products.map((p: Product) => p.collection)))], [products]);
@@ -70,8 +71,11 @@ function Collection() {
                 </div>
                 {p.material && <p className="mt-1 text-sm text-muted-foreground">{p.material}</p>}
                 {p.description && <p className="mt-2 text-sm text-muted-foreground/80">{p.description}</p>}
-                <button className="mt-4 w-full rounded-full border border-primary py-3 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground">
-                  Ajouter au panier
+                <button
+                  onClick={() => add(p)}
+                  className="mt-4 w-full rounded-full border border-primary py-3 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  🛏️ Ajouter au panier
                 </button>
               </div>
             </article>
