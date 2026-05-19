@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TemoignagesRouteImport } from './routes/temoignages'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as AProposRouteImport } from './routes/a-propos'
@@ -16,6 +17,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 
+const TemoignagesRoute = TemoignagesRouteImport.update({
+  id: '/temoignages',
+  path: '/temoignages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
+  '/temoignages': typeof TemoignagesRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
+  '/temoignages': typeof TemoignagesRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
+  '/temoignages': typeof TemoignagesRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -79,16 +88,25 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/collection'
     | '/contact'
+    | '/temoignages'
     | '/admin/login'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/a-propos' | '/collection' | '/contact' | '/admin/login' | '/admin'
+  to:
+    | '/'
+    | '/a-propos'
+    | '/collection'
+    | '/contact'
+    | '/temoignages'
+    | '/admin/login'
+    | '/admin'
   id:
     | '__root__'
     | '/'
     | '/a-propos'
     | '/collection'
     | '/contact'
+    | '/temoignages'
     | '/admin/login'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -98,12 +116,20 @@ export interface RootRouteChildren {
   AProposRoute: typeof AProposRoute
   CollectionRoute: typeof CollectionRoute
   ContactRoute: typeof ContactRoute
+  TemoignagesRoute: typeof TemoignagesRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/temoignages': {
+      id: '/temoignages'
+      path: '/temoignages'
+      fullPath: '/temoignages'
+      preLoaderRoute: typeof TemoignagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -154,9 +180,20 @@ const rootRouteChildren: RootRouteChildren = {
   AProposRoute: AProposRoute,
   CollectionRoute: CollectionRoute,
   ContactRoute: ContactRoute,
+  TemoignagesRoute: TemoignagesRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
