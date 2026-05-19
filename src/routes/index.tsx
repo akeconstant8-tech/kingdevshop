@@ -25,7 +25,12 @@ function Home() {
     <>
       {/* HERO */}
       <section className="relative overflow-hidden">
+        <span className="floating-emoji" style={{ top: "8%", left: "4%", ["--r" as any]: "-8deg", animationDelay: "0s" }} aria-hidden>🛏️</span>
+        <span className="floating-emoji" style={{ top: "20%", right: "6%", ["--r" as any]: "10deg", animationDelay: "1.2s" }} aria-hidden>🛌</span>
+        <span className="floating-emoji" style={{ bottom: "12%", left: "8%", ["--r" as any]: "6deg", animationDelay: "2.4s" }} aria-hidden>✨</span>
+        <span className="floating-emoji" style={{ bottom: "20%", right: "10%", ["--r" as any]: "-6deg", animationDelay: "3s" }} aria-hidden>🌙</span>
         <div className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:py-28">
+
           <div className="flex flex-col justify-center">
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs uppercase tracking-[0.25em] text-primary">
               <Crown className="h-3.5 w-3.5" /> Maison de Linge Royal
