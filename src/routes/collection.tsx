@@ -1,4 +1,5 @@
-import { createFileRoute, useServerFn } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listProducts, type Product } from "@/lib/products.functions";
 import { ProductImage } from "@/components/ProductImage";
@@ -19,7 +20,7 @@ function Collection() {
   const { data: products = [], isLoading } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn() });
   const [active, setActive] = useState<string>("Tous");
 
-  const filters = useMemo(() => ["Tous", ...Array.from(new Set(products.map((p) => p.collection)))], [products]);
+  const filters = useMemo<string[]>(() => ["Tous", ...Array.from(new Set(products.map((p: Product) => p.collection)))], [products]);
   const items = active === "Tous" ? products : products.filter((p: Product) => p.collection === active);
 
   return (
