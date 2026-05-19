@@ -1,0 +1,1 @@
+DELETE FROM public.products WHERE collection IN ('Signature', 'Romance', 'Héritage');

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import heroBed from "@/assets/hero-bed.jpg";
+import heroBed from "@/assets/hero-bed-clean.png";
 import logo from "@/assets/logo-kingdevshop.png";
 import { listProducts, type Product } from "@/lib/products.functions";
 import { ArrowRight, Sparkles, ShieldCheck, Truck, Star } from "lucide-react";
@@ -65,9 +65,9 @@ function Home() {
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-[var(--gradient-royal)] opacity-20 blur-3xl" />
-            <div className="relative overflow-hidden rounded-2xl shadow-[var(--shadow-elegant)]">
-              <img src={heroBed} alt="Linge de lit King Dev Shop" width={1600} height={1000} className="h-full w-full object-cover" />
+            <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-[var(--gradient-royal)] opacity-10 blur-3xl" />
+            <div className="relative overflow-hidden rounded-2xl bg-white shadow-[var(--shadow-elegant)] p-6">
+              <img src={heroBed} alt="Parure de lit King Dev Shop" className="h-full w-full object-contain" />
             </div>
           </div>
         </div>
