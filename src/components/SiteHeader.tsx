@@ -7,7 +7,6 @@ import logo from "@/assets/logo-kingdevshop.png";
 const nav = [
   { to: "/", label: "Accueil" },
   { to: "/collection", label: "Collection" },
-  { to: "/temoignages", label: "Témoignages" },
   { to: "/contact", label: "Contact" },
   { to: "/a-propos", label: "À propos" },
 ] as const;
