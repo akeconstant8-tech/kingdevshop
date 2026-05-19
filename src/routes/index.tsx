@@ -6,6 +6,7 @@ import logo from "@/assets/logo-kingdevshop.png";
 import { listProducts, type Product } from "@/lib/products.functions";
 import { ArrowRight, Sparkles, ShieldCheck, Truck, Star } from "lucide-react";
 import { ProductImage } from "@/components/ProductImage";
+import { useCart } from "@/lib/cart";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const fetchFn = useServerFn(listProducts);
   const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn() });
+  const { add, setOpen: setCartOpen } = useCart();
   const featured = products.slice(0, 4);
 
   return (
