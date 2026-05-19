@@ -99,7 +99,7 @@ function AdminDashboard() {
 
 function AddProductForm({ onCreate }: { onCreate: (p: any) => Promise<void> }) {
   const [name, setName] = useState("");
-  const [collection, setCollection] = useState("Signature");
+  const [collection, setCollection] = useState("Six Pièces");
   const [price, setPrice] = useState("");
   const [material, setMaterial] = useState("");
   const [description, setDescription] = useState("");
