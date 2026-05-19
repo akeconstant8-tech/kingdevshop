@@ -30,8 +30,8 @@ export function SiteFooter() {
             <h4 className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">Contact</h4>
             <ul className="mt-4 space-y-2 text-sm text-primary-foreground/75">
               <li>contact@kingdevshop.com</li>
-              <li>+225 07 00 00 00 00</li>
-              <li>Abidjan, Côte d'Ivoire</li>
+              <li>WhatsApp : +225 07 11 25 76 55</li>
+              <li>Bonoua, Carrefour 8 kilos</li>
             </ul>
           </div>
         </div>
