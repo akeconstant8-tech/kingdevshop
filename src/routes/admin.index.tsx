@@ -363,15 +363,24 @@ function TestimonialsTab() {
         <h2 className="font-display text-2xl">Témoignages ({testimonials.length})</h2>
         <div className="mt-6 space-y-3">
           {(testimonials as any[]).map((t) => (
-            <article key={t.id} className="rounded-xl border border-border bg-card p-5">
+            <article key={t.id} className={`rounded-xl border p-5 ${t.published ? "border-border bg-card" : "border-primary/40 bg-primary/5"}`}>
               <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div>
-                  <h3 className="font-medium">{t.name} <span className="text-xs text-muted-foreground">· {t.location ?? "—"} · {t.rating}★</span></h3>
+                <div className="flex items-start gap-3">
+                  {t.photo_url ? (
+                    <img src={t.photo_url} alt={t.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/30" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">{t.name.charAt(0).toUpperCase()}</div>
+                  )}
+                  <div>
+                    <h3 className="font-medium">{t.name} <span className="text-xs text-muted-foreground">· {t.location ?? "—"} · {t.rating}★</span></h3>
+                    {!t.published && <span className="mt-1 inline-block rounded-full bg-primary/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-primary">En attente de validation</span>}
+                    <p className="text-xs text-muted-foreground mt-1">{new Date(t.created_at).toLocaleString("fr-FR")}</p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={async () => { await updateFn({ data: { id: t.id, published: !t.published } }); invalidate(); }}
-                    className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
-                    {t.published ? <><Eye className="h-3 w-3" /> Publié</> : <><EyeOff className="h-3 w-3" /> Masqué</>}
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs ${t.published ? "border border-border" : "bg-primary text-primary-foreground"}`}>
+                    {t.published ? <><EyeOff className="h-3 w-3" /> Masquer</> : <><Check className="h-3 w-3" /> Approuver</>}
                   </button>
                   <button onClick={async () => { if (confirm("Supprimer ?")) { await delFn({ data: { id: t.id } }); invalidate(); } }}
                     className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1.5 text-xs text-destructive">
