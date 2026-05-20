@@ -40,9 +40,10 @@ function AdminLogin() {
         if (error) throw error;
         setInfo("Email de réinitialisation envoyé. Vérifiez votre boîte de réception.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/admin" });
+        if (!data.session) throw new Error("Session non créée. Réessayez.");
+        window.location.assign("/admin");
       }
     } catch (e: any) {
       setErr(e.message ?? "Erreur");
