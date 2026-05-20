@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listProducts, createProduct, deleteProduct, getMyAdminStatus, bootstrapFirstAdmin, type Product,
@@ -18,8 +18,10 @@ import { Crown, LogOut, Trash2, Upload, Plus, Package, MessageSquare, Star, Shop
 export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Administration — King Dev Shop" }, { name: "robots", content: "noindex" }] }),
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/admin/login" });
+    if (typeof window === "undefined") return;
+
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw redirect({ to: "/admin/login" });
   },
   component: AdminDashboard,
 });
@@ -28,16 +30,44 @@ type Tab = "products" | "home" | "messages" | "testimonials" | "orders";
 
 function AdminDashboard() {
   const nav = useNavigate();
+  const [sessionReady, setSessionReady] = useState(false);
   const statusFn = useServerFn(getMyAdminStatus);
   const bootstrapFn = useServerFn(bootstrapFirstAdmin);
-  const { data: status, refetch: refetchStatus } = useQuery({ queryKey: ["admin-status"], queryFn: () => statusFn() });
+  const { data: status, refetch: refetchStatus } = useQuery({
+    queryKey: ["admin-status"],
+    queryFn: () => statusFn(),
+    enabled: sessionReady,
+  });
   const [tab, setTab] = useState<Tab>("products");
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!mounted) return;
+      if (error || !data.user) {
+        nav({ to: "/admin/login" });
+        return;
+      }
+      setSessionReady(true);
+    });
+    return () => { mounted = false; };
+  }, [nav]);
 
   const logout = async () => { await supabase.auth.signOut(); nav({ to: "/admin/login" }); };
   const claim = async () => {
     try { await bootstrapFn(); await refetchStatus(); }
     catch (e: any) { alert(e.message); }
   };
+
+  if (!sessionReady) {
+    return (
+      <section className="mx-auto max-w-md px-6 py-20 text-center">
+        <Crown className="mx-auto h-10 w-10 text-primary" />
+        <h1 className="mt-4 font-display text-3xl">Connexion admin</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Vérification de votre session...</p>
+      </section>
+    );
+  }
 
   if (status && !status.isAdmin) {
     return (

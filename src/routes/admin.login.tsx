@@ -25,22 +25,27 @@ function AdminLogin() {
     e.preventDefault();
     reset(); setLoading(true);
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (normalizedEmail.endsWith(".comm")) {
+        throw new Error("Adresse email invalide : utilisez .com et non .comm.");
+      }
+
       if (mode === "signup") {
         if (password !== confirm) throw new Error("Les mots de passe ne correspondent pas.");
         const { error } = await supabase.auth.signUp({
-          email, password,
+          email: normalizedEmail, password,
           options: { emailRedirectTo: window.location.origin + "/admin" },
         });
         if (error) throw error;
         navigate({ to: "/admin" });
       } else if (mode === "forgot") {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
           redirectTo: window.location.origin + "/reset-password",
         });
         if (error) throw error;
         setInfo("Email de réinitialisation envoyé. Vérifiez votre boîte de réception.");
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
         if (error) throw error;
         if (!data.session) throw new Error("Session non créée. Réessayez.");
         window.location.assign("/admin");
@@ -76,6 +81,7 @@ function AdminLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              placeholder="komlandavid98@gmail.com"
               className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none"
             />
           </div>
