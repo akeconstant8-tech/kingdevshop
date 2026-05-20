@@ -9,6 +9,8 @@
 @theme inline {
   --font-display: 'Bodoni Moda', 'Cormorant Garamond', serif;
   --font-serif: 'Cormorant Garamond', serif;
+  --font-couture: 'Italiana', 'Bodoni Moda', serif;
+  --font-script: 'Pinyon Script', 'Cormorant Garamond', cursive;
   --font-sans: 'Jost', 'Inter', sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
