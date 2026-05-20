@@ -169,3 +169,33 @@
 .marquee-track-reverse {
   animation: marqueeScrollReverse 40s linear infinite;
 }
+
+/* Typographies de fantaisie luxueuse */
+.font-couture {
+  font-family: var(--font-couture);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.font-script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  letter-spacing: 0;
+  font-style: normal;
+}
+.eyebrow-luxe {
+  font-family: var(--font-couture);
+  font-size: 0.7rem;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: #B89455;
+}
+.script-accent {
+  font-family: var(--font-script);
+  background: linear-gradient(135deg, #0B2A5B 0%, #D4B87A 50%, #0B2A5B 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sloganShimmer 10s linear infinite;
+}
