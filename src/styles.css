@@ -83,11 +83,16 @@
 @layer base {
   * { border-color: var(--color-border); }
   body {
-    background: #ffffff;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(30, 79, 168, 0.05), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(212, 184, 122, 0.06), transparent 60%),
+      var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: 0.02em; font-weight: 700; }
+  h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: 0.01em; font-weight: 600; }
 }
 
 /* Floating sheet emoticons */
