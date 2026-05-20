@@ -84,6 +84,10 @@ export const DELIVERY_OPTIONS: { city: string; fee: number }[] = [
   { city: "Adjamé", fee: 1500 },
   { city: "Marcory", fee: 1500 },
   { city: "Treichville", fee: 1500 },
+  { city: "Koumassi", fee: 1500 },
+  { city: "Port-Bouët", fee: 2000 },
+  { city: "Attécoubé", fee: 1500 },
+  { city: "Plateau", fee: 2000 },
 ];
 
 export function buildWhatsAppLink(
