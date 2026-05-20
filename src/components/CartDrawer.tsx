@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { z } from "zod";
 import { useServerFn } from "@tanstack/react-start";
-import { useCart, buildWhatsAppLink, type CustomerInfo } from "@/lib/cart";
+import { useCart, buildWhatsAppLink, DELIVERY_OPTIONS, type CustomerInfo } from "@/lib/cart";
 import { createOrder } from "@/lib/admin.functions";
-import { X, Minus, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { X, Minus, Plus, Trash2, ArrowLeft, Truck } from "lucide-react";
 import { ProductImage } from "@/components/ProductImage";
 
 const customerSchema = z.object({
@@ -18,11 +18,15 @@ const customerSchema = z.object({
 });
 
 export function CartDrawer() {
-  const { items, total, open, setOpen, setQty, remove, clear } = useCart();
+  const { items, count, total, open, setOpen, setQty, remove, clear } = useCart();
   const [step, setStep] = useState<"cart" | "checkout">("cart");
-  const [form, setForm] = useState<CustomerInfo>({ name: "", phone: "", address: "Bonoua, Carrefour 8 kilos" });
+  const [form, setForm] = useState<CustomerInfo>({ name: "", phone: "", address: "" });
+  const [city, setCity] = useState<string>(DELIVERY_OPTIONS[0].city);
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
   const orderFn = useServerFn(createOrder);
+
+  const delivery = DELIVERY_OPTIONS.find((o) => o.city === city) ?? DELIVERY_OPTIONS[0];
+  const grandTotal = total + delivery.fee;
 
   const close = () => { setOpen(false); setStep("cart"); };
 
@@ -43,14 +47,14 @@ export function CartDrawer() {
       await orderFn({ data: {
         customer_name: parsed.data.name,
         customer_phone: parsed.data.phone,
-        customer_address: parsed.data.address,
+        customer_address: `${parsed.data.address} — Livraison ${delivery.city} (${delivery.fee.toLocaleString("fr-FR")} FCFA)`,
         items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
-        total,
+        total: grandTotal,
       }});
     } catch (err) {
       console.error("Order save failed", err);
     }
-    const url = buildWhatsAppLink(items, total, parsed.data);
+    const url = buildWhatsAppLink(items, total, parsed.data, delivery);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -73,7 +77,7 @@ export function CartDrawer() {
               </button>
             )}
             <h2 className="font-display text-xl">
-              {step === "cart" ? "Votre panier 🛏️" : "Vos informations 📦"}
+              {step === "cart" ? `Votre panier 🛏️ (${count} article${count > 1 ? "s" : ""})` : "Vos informations 📦"}
             </h2>
           </div>
           <button onClick={close} className="rounded-full p-2 hover:bg-secondary" aria-label="Fermer">
@@ -88,33 +92,61 @@ export function CartDrawer() {
                 Votre panier est vide. ✨<br />Ajoutez de beaux draps !
               </p>
             ) : (
-              <ul className="space-y-4">
-                {items.map((i) => (
-                  <li key={i.id} className="flex gap-3 rounded-lg border border-border p-3">
-                    <div className="h-20 w-16 overflow-hidden rounded bg-secondary shrink-0">
-                      <ProductImage src={i.image_url} alt={i.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-medium text-sm truncate">{i.name}</p>
-                        <button onClick={() => remove(i.id)} className="text-muted-foreground hover:text-destructive" aria-label="Retirer">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+              <>
+                <ul className="space-y-4">
+                  {items.map((i) => (
+                    <li key={i.id} className="flex gap-3 rounded-lg border border-border p-3">
+                      <div className="h-20 w-16 overflow-hidden rounded bg-secondary shrink-0">
+                        <ProductImage src={i.image_url} alt={i.name} className="h-full w-full object-cover" />
                       </div>
-                      <p className="text-xs text-muted-foreground">{i.price.toLocaleString("fr-FR")} FCFA</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <button onClick={() => setQty(i.id, i.qty - 1)} className="rounded border border-border p-1 hover:bg-secondary">
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="text-sm w-6 text-center">{i.qty}</span>
-                        <button onClick={() => setQty(i.id, i.qty + 1)} className="rounded border border-border p-1 hover:bg-secondary">
-                          <Plus className="h-3 w-3" />
-                        </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-sm truncate">{i.name}</p>
+                          <button onClick={() => remove(i.id)} className="text-muted-foreground hover:text-destructive" aria-label="Retirer">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{i.price.toLocaleString("fr-FR")} FCFA · Sous-total {(i.price * i.qty).toLocaleString("fr-FR")} FCFA</p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <button onClick={() => setQty(i.id, i.qty - 1)} className="rounded border border-border p-1 hover:bg-secondary" aria-label="Diminuer">
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            value={i.qty}
+                            onChange={(e) => {
+                              const n = parseInt(e.target.value, 10);
+                              if (!Number.isNaN(n)) setQty(i.id, Math.max(1, n));
+                            }}
+                            className="w-12 rounded border border-border bg-background px-1 py-0.5 text-center text-sm"
+                          />
+                          <button onClick={() => setQty(i.id, i.qty + 1)} className="rounded border border-border p-1 hover:bg-secondary" aria-label="Augmenter">
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-5 rounded-lg border border-border bg-card p-4">
+                  <label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                    <Truck className="h-3.5 w-3.5" /> Ville de livraison
+                  </label>
+                  <select
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  >
+                    {DELIVERY_OPTIONS.map((o) => (
+                      <option key={o.city} value={o.city}>
+                        {o.city} — {o.fee.toLocaleString("fr-FR")} FCFA
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
             )
           ) : (
             <form id="checkout-form" onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -161,9 +193,19 @@ export function CartDrawer() {
 
         {items.length > 0 && (
           <footer className="border-t border-border px-5 py-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Total</span>
-              <span className="font-display text-2xl">{total.toLocaleString("fr-FR")} FCFA</span>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>{count} article{count > 1 ? "s" : ""}</span>
+                <span>{total.toLocaleString("fr-FR")} FCFA</span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Livraison ({delivery.city})</span>
+                <span>{delivery.fee.toLocaleString("fr-FR")} FCFA</span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <span className="text-sm font-medium">Total TTC</span>
+                <span className="font-display text-2xl">{grandTotal.toLocaleString("fr-FR")} FCFA</span>
+              </div>
             </div>
             {step === "cart" ? (
               <>
