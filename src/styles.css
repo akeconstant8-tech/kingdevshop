@@ -38,33 +38,46 @@
 }
 
 :root {
-  --radius: 0.5rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.2 0.05 250);
+  --radius: 0.625rem;
+  /* Ivoire chaud, presque imperceptible — fond luxueux */
+  --background: oklch(0.99 0.005 250);
+  --foreground: oklch(0.18 0.04 255);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.05 250);
+  --card-foreground: oklch(0.18 0.04 255);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.05 250);
-  /* DodgerBlue */
-  --primary: oklch(0.65 0.19 250);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.96 0.02 250);
-  --secondary-foreground: oklch(0.3 0.12 250);
-  --muted: oklch(0.96 0.01 250);
-  --muted-foreground: oklch(0.5 0.04 250);
-  --accent: oklch(0.92 0.06 250);
-  --accent-foreground: oklch(0.3 0.12 250);
-  --gold: oklch(0.65 0.19 250);
-  --gold-foreground: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.04 255);
+
+  /* Bleu royal saphir profond — plus dense, plus précieux */
+  --primary: oklch(0.48 0.18 258);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --primary-glow: oklch(0.62 0.19 255);
+
+  --secondary: oklch(0.97 0.012 250);
+  --secondary-foreground: oklch(0.28 0.1 258);
+  --muted: oklch(0.965 0.008 250);
+  --muted-foreground: oklch(0.48 0.035 255);
+  --accent: oklch(0.94 0.04 255);
+  --accent-foreground: oklch(0.28 0.12 258);
+
+  /* Or champagne — accent de luxe, pour les détails */
+  --gold: oklch(0.78 0.11 85);
+  --gold-foreground: oklch(0.2 0.04 255);
+
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.92 0.02 250);
-  --input: oklch(0.94 0.02 250);
-  --ring: oklch(0.65 0.19 250);
+  --border: oklch(0.9 0.015 250);
+  --input: oklch(0.94 0.015 250);
+  --ring: oklch(0.48 0.18 258);
 
-  --gradient-royal: linear-gradient(135deg, #1E90FF, #4FA8FF);
-  --shadow-elegant: 0 20px 60px -20px rgba(30, 144, 255, 0.45);
-  --shadow-soft: 0 10px 30px -10px rgba(30, 144, 255, 0.25);
+  /* Dégradé saphir profond → bleu nuit → reflet — sensation joaillerie */
+  --gradient-royal: linear-gradient(135deg, #0B2A5B 0%, #1E4FA8 45%, #4A7FD6 100%);
+  --gradient-sapphire: linear-gradient(135deg, #081E47 0%, #173C7F 50%, #2A5FB8 100%);
+  --gradient-champagne: linear-gradient(135deg, #D4B87A 0%, #E8D098 50%, #B89455 100%);
+
+  /* Ombres profondes et douces — effet velours */
+  --shadow-elegant: 0 30px 80px -30px rgba(11, 42, 91, 0.35), 0 8px 24px -12px rgba(11, 42, 91, 0.18);
+  --shadow-soft: 0 12px 40px -16px rgba(11, 42, 91, 0.2);
+  --shadow-gold: 0 20px 60px -24px rgba(184, 148, 85, 0.4);
 }
 
 @layer base {
