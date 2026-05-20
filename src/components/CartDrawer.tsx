@@ -92,33 +92,61 @@ export function CartDrawer() {
                 Votre panier est vide. ✨<br />Ajoutez de beaux draps !
               </p>
             ) : (
-              <ul className="space-y-4">
-                {items.map((i) => (
-                  <li key={i.id} className="flex gap-3 rounded-lg border border-border p-3">
-                    <div className="h-20 w-16 overflow-hidden rounded bg-secondary shrink-0">
-                      <ProductImage src={i.image_url} alt={i.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-medium text-sm truncate">{i.name}</p>
-                        <button onClick={() => remove(i.id)} className="text-muted-foreground hover:text-destructive" aria-label="Retirer">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+              <>
+                <ul className="space-y-4">
+                  {items.map((i) => (
+                    <li key={i.id} className="flex gap-3 rounded-lg border border-border p-3">
+                      <div className="h-20 w-16 overflow-hidden rounded bg-secondary shrink-0">
+                        <ProductImage src={i.image_url} alt={i.name} className="h-full w-full object-cover" />
                       </div>
-                      <p className="text-xs text-muted-foreground">{i.price.toLocaleString("fr-FR")} FCFA</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <button onClick={() => setQty(i.id, i.qty - 1)} className="rounded border border-border p-1 hover:bg-secondary">
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="text-sm w-6 text-center">{i.qty}</span>
-                        <button onClick={() => setQty(i.id, i.qty + 1)} className="rounded border border-border p-1 hover:bg-secondary">
-                          <Plus className="h-3 w-3" />
-                        </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-sm truncate">{i.name}</p>
+                          <button onClick={() => remove(i.id)} className="text-muted-foreground hover:text-destructive" aria-label="Retirer">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{i.price.toLocaleString("fr-FR")} FCFA · Sous-total {(i.price * i.qty).toLocaleString("fr-FR")} FCFA</p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <button onClick={() => setQty(i.id, i.qty - 1)} className="rounded border border-border p-1 hover:bg-secondary" aria-label="Diminuer">
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            value={i.qty}
+                            onChange={(e) => {
+                              const n = parseInt(e.target.value, 10);
+                              if (!Number.isNaN(n)) setQty(i.id, Math.max(1, n));
+                            }}
+                            className="w-12 rounded border border-border bg-background px-1 py-0.5 text-center text-sm"
+                          />
+                          <button onClick={() => setQty(i.id, i.qty + 1)} className="rounded border border-border p-1 hover:bg-secondary" aria-label="Augmenter">
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-5 rounded-lg border border-border bg-card p-4">
+                  <label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                    <Truck className="h-3.5 w-3.5" /> Ville de livraison
+                  </label>
+                  <select
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  >
+                    {DELIVERY_OPTIONS.map((o) => (
+                      <option key={o.city} value={o.city}>
+                        {o.city} — {o.fee.toLocaleString("fr-FR")} FCFA
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
             )
           ) : (
             <form id="checkout-form" onSubmit={handleSubmit} className="space-y-4" noValidate>
