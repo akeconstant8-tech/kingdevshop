@@ -77,7 +77,12 @@ export type CustomerInfo = { name: string; phone: string; address: string };
 
 export const DELIVERY_OPTIONS: { city: string; fee: number }[] = [
   { city: "Grand-Bassam", fee: 3000 },
+  { city: "Anyama", fee: 2500 },
   { city: "Abobo", fee: 2000 },
+  { city: "Cocody", fee: 2000 },
+  { city: "Bingerville", fee: 2000 },
+  { city: "Adjamé", fee: 1500 },
+  { city: "Marcory", fee: 1500 },
   { city: "Treichville", fee: 1500 },
 ];
 
