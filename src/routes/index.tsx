@@ -43,14 +43,13 @@ function Home() {
           <div className="flex flex-col justify-center">
             <img src={logo} alt="King Dev Shop" className="h-20 w-20 object-contain" />
             <h1 className="brand-wordmark mt-6 text-5xl leading-[1.05] sm:text-6xl lg:text-7xl xl:text-8xl">
-              KING DEV SHOP
+              {heroTitle}
             </h1>
             <p className="slogan-animated mt-6 max-w-lg font-display text-2xl sm:text-3xl font-semibold italic">
-              Un sommeil doux et réparateur avec King Dev Shop.
+              {heroSlogan}
             </p>
-            <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">
-              Découvrez notre collection de draps confortables, pensés pour transformer
-              chaque nuit en un moment de pur bien-être. 🛏️ ✨
+            <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground whitespace-pre-line">
+              {heroDesc}
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
               <Link to="/collection" className="group inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-semibold uppercase tracking-wider text-primary-foreground shadow-[var(--shadow-elegant)] transition hover:translate-y-[-2px]">
