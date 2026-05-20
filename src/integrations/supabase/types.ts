@@ -140,6 +140,7 @@ export type Database = {
           id: string
           location: string | null
           name: string
+          photo_url: string | null
           published: boolean
           rating: number
           text: string
@@ -149,6 +150,7 @@ export type Database = {
           id?: string
           location?: string | null
           name: string
+          photo_url?: string | null
           published?: boolean
           rating?: number
           text: string
@@ -158,6 +160,7 @@ export type Database = {
           id?: string
           location?: string | null
           name?: string
+          photo_url?: string | null
           published?: boolean
           rating?: number
           text?: string
