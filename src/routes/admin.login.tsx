@@ -20,16 +20,21 @@ function AdminLogin() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErr(null); setLoading(true);
+    setErr(null); setInfo(null); setLoading(true);
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/admin" } });
         if (error) throw error;
+        navigate({ to: "/admin" });
+      } else if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/reset-password" });
+        if (error) throw error;
+        setInfo("Email de réinitialisation envoyé. Vérifiez votre boîte de réception.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        navigate({ to: "/admin" });
       }
-      navigate({ to: "/admin" });
     } catch (e: any) {
       setErr(e.message ?? "Erreur");
     } finally { setLoading(false); }
