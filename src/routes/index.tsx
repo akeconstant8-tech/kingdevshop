@@ -42,9 +42,15 @@ function Home() {
 
           <div className="flex flex-col justify-center">
             <img src={logo} alt="King Dev Shop" className="h-20 w-20 object-contain" />
-            <h1 className="brand-wordmark mt-6 text-5xl leading-[1.05] sm:text-6xl lg:text-7xl xl:text-8xl">
+            <span className="eyebrow-luxe mt-6 inline-flex items-center gap-3">
+              <span className="gold-rule" /> Maison de Linge <span className="gold-rule" />
+            </span>
+            <h1 className="brand-wordmark mt-4 text-5xl leading-[1.05] sm:text-6xl lg:text-7xl xl:text-8xl">
               {heroTitle}
             </h1>
+            <p className="script-accent mt-4 text-5xl sm:text-6xl leading-none">
+              l'art du sommeil
+            </p>
             <p className="slogan-animated mt-6 max-w-lg font-display text-2xl sm:text-3xl font-semibold italic">
               {heroSlogan}
             </p>
@@ -105,7 +111,7 @@ function Home() {
       <section className="mx-auto max-w-7xl px-6 py-24 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <span className="text-xs uppercase tracking-[0.3em] text-primary">Sélection</span>
+            <span className="eyebrow-luxe">Sélection</span>
             <h2 className="mt-3 font-display text-4xl sm:text-5xl">Nos produits phares</h2>
           </div>
           <Link to="/collection" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider hover:text-primary">
@@ -155,7 +161,7 @@ function Home() {
       <section className="mx-auto max-w-7xl px-6 py-24 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <span className="text-xs uppercase tracking-[0.3em] text-primary">Témoignages</span>
+            <span className="eyebrow-luxe">Témoignages</span>
             <h2 className="mt-3 font-display text-4xl sm:text-5xl">Ils nous font confiance</h2>
           </div>
           <Link to="/temoignages" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider hover:text-primary">
