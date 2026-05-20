@@ -121,8 +121,8 @@ function Home() {
           )}
           {featured.map((p: Product) => (
             <article key={p.id} className="group">
-              <div className="relative overflow-hidden rounded-lg bg-white aspect-[4/5] border border-border">
-                <ProductImage src={p.image_url} alt={p.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="relative overflow-hidden rounded-lg bg-white aspect-[4/3] border border-border">
+                <ProductImage src={p.image_url} alt={p.name} className="h-full w-full object-contain p-2 transition-transform duration-700 group-hover:scale-105" />
                 <span className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[10px] uppercase tracking-wider text-primary">{p.collection}</span>
               </div>
               <div className="mt-4 flex items-start justify-between gap-2">
