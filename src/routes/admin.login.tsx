@@ -53,41 +53,68 @@ function AdminLogin() {
           {mode === "login" ? "Connectez-vous pour gérer la boutique" : "Créer le compte administrateur"}
         </p>
 
+        <h1 className="mt-6 text-center font-display text-3xl">
+          {mode === "forgot" ? "Mot de passe oublié" : "Espace Administrateur"}
+        </h1>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          {mode === "login" && "Connectez-vous pour gérer la boutique"}
+          {mode === "signup" && "Créer le compte administrateur"}
+          {mode === "forgot" && "Entrez votre email pour recevoir un lien de réinitialisation"}
+        </p>
+
         <form onSubmit={submit} className="mt-8 space-y-4">
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Email</label>
             <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none" />
           </div>
-          <div>
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">Mot de passe</label>
-            <div className="relative mt-1">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-4 py-2.5 pr-11 text-sm focus:border-primary outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-primary"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+          {mode !== "forgot" && (
+            <div>
+              <label className="text-xs uppercase tracking-wider text-muted-foreground">Mot de passe</label>
+              <div className="relative mt-1">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-4 py-2.5 pr-11 text-sm focus:border-primary outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-primary"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {mode === "login" && (
+                <button
+                  type="button"
+                  onClick={() => { setMode("forgot"); setErr(null); setInfo(null); }}
+                  className="mt-2 text-xs text-primary hover:underline"
+                >
+                  Mot de passe oublié ?
+                </button>
+              )}
             </div>
-          </div>
+          )}
           {err && <p className="text-sm text-destructive">{err}</p>}
+          {info && <p className="text-sm text-primary">{info}</p>}
           <button disabled={loading} className="w-full rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50">
-            {loading ? "..." : mode === "login" ? "Se connecter" : "Créer le compte"}
+            {loading ? "..." : mode === "login" ? "Se connecter" : mode === "signup" ? "Créer le compte" : "Envoyer le lien"}
           </button>
         </form>
 
-        <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
-          {mode === "login" ? "Première fois ? Créer le compte admin" : "Déjà un compte ? Se connecter"}
-        </button>
+        {mode === "forgot" ? (
+          <button onClick={() => { setMode("login"); setErr(null); setInfo(null); }} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
+            ← Retour à la connexion
+          </button>
+        ) : (
+          <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setErr(null); setInfo(null); }} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
+            {mode === "login" ? "Première fois ? Créer le compte admin" : "Déjà un compte ? Se connecter"}
+          </button>
+        )}
 
         <Link to="/" className="mt-4 block text-center text-xs text-muted-foreground hover:text-primary">← Retour au site</Link>
       </div>
