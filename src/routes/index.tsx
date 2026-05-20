@@ -42,9 +42,15 @@ function Home() {
 
           <div className="flex flex-col justify-center">
             <img src={logo} alt="King Dev Shop" className="h-20 w-20 object-contain" />
-            <h1 className="brand-wordmark mt-6 text-5xl leading-[1.05] sm:text-6xl lg:text-7xl xl:text-8xl">
+            <span className="eyebrow-luxe mt-6 inline-flex items-center gap-3">
+              <span className="gold-rule" /> Maison de Linge <span className="gold-rule" />
+            </span>
+            <h1 className="brand-wordmark mt-4 text-5xl leading-[1.05] sm:text-6xl lg:text-7xl xl:text-8xl">
               {heroTitle}
             </h1>
+            <p className="script-accent mt-4 text-5xl sm:text-6xl leading-none">
+              l'art du sommeil
+            </p>
             <p className="slogan-animated mt-6 max-w-lg font-display text-2xl sm:text-3xl font-semibold italic">
               {heroSlogan}
             </p>
