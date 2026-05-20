@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
+import { createMessage } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -13,7 +15,23 @@ export const Route = createFileRoute("/contact")({
 });
 
 function Contact() {
-  const [sent, setSent] = useState(false);
+  const sendFn = useServerFn(createMessage);
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [err, setErr] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("sending"); setErr(null);
+    try {
+      await sendFn({ data: { name: form.name, email: form.email, subject: form.subject || null, message: form.message } });
+      setStatus("sent");
+      setForm({ name: "", email: "", subject: "", message: "" });
+    } catch (e: any) {
+      setStatus("error"); setErr(e?.message ?? "Erreur");
+    }
+  };
+
   return (
     <section className="mx-auto grid max-w-7xl gap-16 px-6 py-20 lg:grid-cols-2 lg:px-10">
       <div>
@@ -40,18 +58,24 @@ function Contact() {
         </ul>
       </div>
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); setSent(true); }}
-        className="rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-elegant)]"
-      >
+      <form onSubmit={submit} className="rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-elegant)]">
         <div className="grid gap-5">
-          <Field label="Nom complet" required><input required className="field" /></Field>
-          <Field label="Email" required><input type="email" required className="field" /></Field>
-          <Field label="Sujet"><input className="field" /></Field>
-          <Field label="Message" required><textarea required rows={5} className="field resize-none" /></Field>
-          <button type="submit" className="mt-2 rounded-full bg-primary px-6 py-4 text-sm font-medium text-primary-foreground hover:opacity-90">
-            {sent ? "Message envoyé ✓" : "Envoyer le message"}
+          <Field label="Nom complet" required>
+            <input required className="field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </Field>
+          <Field label="Email" required>
+            <input type="email" required className="field" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          </Field>
+          <Field label="Sujet">
+            <input className="field" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
+          </Field>
+          <Field label="Message" required>
+            <textarea required rows={5} className="field resize-none" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
+          </Field>
+          <button type="submit" disabled={status === "sending"} className="mt-2 rounded-full bg-primary px-6 py-4 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60">
+            {status === "sending" ? "Envoi…" : status === "sent" ? "Message envoyé ✓" : "Envoyer le message"}
           </button>
+          {err && <p className="text-sm text-destructive">{err}</p>}
         </div>
       </form>
 
