@@ -22,11 +22,29 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(async ()
 
 export const listPublicTestimonials = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
-    .from("testimonials").select("id, name, location, text, rating")
+    .from("testimonials").select("id, name, location, text, rating, photo_url")
     .eq("published", true).order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
 });
+
+const submitTestimonialInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  location: z.string().trim().max(120).optional().nullable(),
+  text: z.string().trim().min(5).max(1000),
+  rating: z.number().int().min(1).max(5),
+  photo_url: z.string().trim().url().max(500).optional().nullable(),
+});
+export const submitTestimonial = createServerFn({ method: "POST" })
+  .inputValidator((i) => submitTestimonialInput.parse(i))
+  .handler(async ({ data }) => {
+    const { error } = await supabaseAdmin.from("testimonials").insert({
+      ...data,
+      published: false,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
 
 const messageInput = z.object({
   name: z.string().trim().min(1).max(120),
