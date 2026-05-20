@@ -75,22 +75,38 @@ export function useCart() {
 
 export type CustomerInfo = { name: string; phone: string; address: string };
 
-export function buildWhatsAppLink(items: CartItem[], total: number, customer: CustomerInfo) {
+export const DELIVERY_OPTIONS: { city: string; fee: number }[] = [
+  { city: "Grand-Bassam", fee: 3000 },
+  { city: "Abobo", fee: 2000 },
+  { city: "Treichville", fee: 1500 },
+];
+
+export function buildWhatsAppLink(
+  items: CartItem[],
+  subtotal: number,
+  customer: CustomerInfo,
+  delivery: { city: string; fee: number },
+) {
+  const grand = subtotal + delivery.fee;
   const lines = [
     "*Nouvelle commande — King Dev Shop* 🛏️",
     "",
     "*Client :*",
     `• Nom : ${customer.name}`,
     `• Téléphone : ${customer.phone}`,
-    `• Adresse de livraison : ${customer.address}`,
+    `• Adresse : ${customer.address}`,
+    `• Ville de livraison : ${delivery.city}`,
     "",
     "*Articles :*",
     ...items.map((i) => `• ${i.name} × ${i.qty} — ${(i.price * i.qty).toLocaleString("fr-FR")} FCFA`),
     "",
-    `*Total : ${total.toLocaleString("fr-FR")} FCFA*`,
+    `Sous-total : ${subtotal.toLocaleString("fr-FR")} FCFA`,
+    `Livraison (${delivery.city}) : ${delivery.fee.toLocaleString("fr-FR")} FCFA`,
+    `*Total TTC : ${grand.toLocaleString("fr-FR")} FCFA*`,
     "",
-    "Merci de me confirmer la disponibilité et le mode de livraison.",
+    "Merci de me confirmer la disponibilité.",
   ];
   const text = encodeURIComponent(lines.join("\n"));
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
 }
+
