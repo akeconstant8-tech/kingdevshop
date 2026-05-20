@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import heroBed from "@/assets/hero-bed-clean.png";
 import logo from "@/assets/logo-kingdevshop.png";
 import { listProducts, type Product } from "@/lib/products.functions";
+import { getSiteContent } from "@/lib/admin.functions";
 import { ArrowRight, Sparkles, ShieldCheck, Truck, Star } from "lucide-react";
 import { ProductImage } from "@/components/ProductImage";
 import { useCart } from "@/lib/cart";
@@ -20,9 +21,14 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const fetchFn = useServerFn(listProducts);
+  const contentFn = useServerFn(getSiteContent);
   const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn() });
+  const { data: content = {} } = useQuery({ queryKey: ["site-content"], queryFn: () => contentFn() });
   const { add, setOpen: setCartOpen } = useCart();
   const featured = products.slice(0, 4);
+  const heroTitle = (content as any).hero_title || "KING DEV SHOP";
+  const heroSlogan = (content as any).hero_slogan || "Un sommeil doux et réparateur avec King Dev Shop.";
+  const heroDesc = (content as any).hero_description || "Découvrez notre collection de draps confortables, pensés pour transformer chaque nuit en un moment de pur bien-être. 🛏️ ✨";
 
   return (
     <>
@@ -37,14 +43,13 @@ function Home() {
           <div className="flex flex-col justify-center">
             <img src={logo} alt="King Dev Shop" className="h-20 w-20 object-contain" />
             <h1 className="brand-wordmark mt-6 text-5xl leading-[1.05] sm:text-6xl lg:text-7xl xl:text-8xl">
-              KING DEV SHOP
+              {heroTitle}
             </h1>
             <p className="slogan-animated mt-6 max-w-lg font-display text-2xl sm:text-3xl font-semibold italic">
-              Un sommeil doux et réparateur avec King Dev Shop.
+              {heroSlogan}
             </p>
-            <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">
-              Découvrez notre collection de draps confortables, pensés pour transformer
-              chaque nuit en un moment de pur bien-être. 🛏️ ✨
+            <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground whitespace-pre-line">
+              {heroDesc}
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
               <Link to="/collection" className="group inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-semibold uppercase tracking-wider text-primary-foreground shadow-[var(--shadow-elegant)] transition hover:translate-y-[-2px]">

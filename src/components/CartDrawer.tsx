@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { z } from "zod";
+import { useServerFn } from "@tanstack/react-start";
 import { useCart, buildWhatsAppLink, type CustomerInfo } from "@/lib/cart";
+import { createOrder } from "@/lib/admin.functions";
 import { X, Minus, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { ProductImage } from "@/components/ProductImage";
 
@@ -20,10 +22,11 @@ export function CartDrawer() {
   const [step, setStep] = useState<"cart" | "checkout">("cart");
   const [form, setForm] = useState<CustomerInfo>({ name: "", phone: "", address: "Bonoua, Carrefour 8 kilos" });
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
+  const orderFn = useServerFn(createOrder);
 
   const close = () => { setOpen(false); setStep("cart"); };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = customerSchema.safeParse(form);
     if (!parsed.success) {
@@ -36,6 +39,17 @@ export function CartDrawer() {
       return;
     }
     setErrors({});
+    try {
+      await orderFn({ data: {
+        customer_name: parsed.data.name,
+        customer_phone: parsed.data.phone,
+        customer_address: parsed.data.address,
+        items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+        total,
+      }});
+    } catch (err) {
+      console.error("Order save failed", err);
+    }
     const url = buildWhatsAppLink(items, total, parsed.data);
     window.open(url, "_blank", "noopener,noreferrer");
   };
