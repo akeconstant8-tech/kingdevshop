@@ -77,7 +77,7 @@ export function CartDrawer() {
               </button>
             )}
             <h2 className="font-display text-xl">
-              {step === "cart" ? "Votre panier 🛏️" : "Vos informations 📦"}
+              {step === "cart" ? `Votre panier 🛏️ (${count} article${count > 1 ? "s" : ""})` : "Vos informations 📦"}
             </h2>
           </div>
           <button onClick={close} className="rounded-full p-2 hover:bg-secondary" aria-label="Fermer">
