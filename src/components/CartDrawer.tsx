@@ -18,11 +18,15 @@ const customerSchema = z.object({
 });
 
 export function CartDrawer() {
-  const { items, total, open, setOpen, setQty, remove, clear } = useCart();
+  const { items, count, total, open, setOpen, setQty, remove, clear } = useCart();
   const [step, setStep] = useState<"cart" | "checkout">("cart");
-  const [form, setForm] = useState<CustomerInfo>({ name: "", phone: "", address: "Bonoua, Carrefour 8 kilos" });
+  const [form, setForm] = useState<CustomerInfo>({ name: "", phone: "", address: "" });
+  const [city, setCity] = useState<string>(DELIVERY_OPTIONS[0].city);
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
   const orderFn = useServerFn(createOrder);
+
+  const delivery = DELIVERY_OPTIONS.find((o) => o.city === city) ?? DELIVERY_OPTIONS[0];
+  const grandTotal = total + delivery.fee;
 
   const close = () => { setOpen(false); setStep("cart"); };
 
@@ -43,14 +47,14 @@ export function CartDrawer() {
       await orderFn({ data: {
         customer_name: parsed.data.name,
         customer_phone: parsed.data.phone,
-        customer_address: parsed.data.address,
+        customer_address: `${parsed.data.address} — Livraison ${delivery.city} (${delivery.fee.toLocaleString("fr-FR")} FCFA)`,
         items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
-        total,
+        total: grandTotal,
       }});
     } catch (err) {
       console.error("Order save failed", err);
     }
-    const url = buildWhatsAppLink(items, total, parsed.data);
+    const url = buildWhatsAppLink(items, total, parsed.data, delivery);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
