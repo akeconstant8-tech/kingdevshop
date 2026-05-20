@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import heroBed from "@/assets/hero-bed-clean.png";
+import heroBed from "@/assets/drap-5.jpg";
 import logo from "@/assets/logo-kingdevshop.png";
 import { listProducts, type Product } from "@/lib/products.functions";
 import { getSiteContent } from "@/lib/admin.functions";
