@@ -111,7 +111,7 @@ function Home() {
       <section className="mx-auto max-w-7xl px-6 py-24 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <span className="text-xs uppercase tracking-[0.3em] text-primary">Sélection</span>
+            <span className="eyebrow-luxe">Sélection</span>
             <h2 className="mt-3 font-display text-4xl sm:text-5xl">Nos produits phares</h2>
           </div>
           <Link to="/collection" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider hover:text-primary">
