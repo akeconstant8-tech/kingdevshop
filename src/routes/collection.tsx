@@ -60,8 +60,8 @@ function Collection() {
         <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((p: Product) => (
             <article key={p.id} className="group">
-              <div className="relative overflow-hidden rounded-lg bg-secondary aspect-[4/5]">
-                <ProductImage src={p.image_url} alt={p.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
+              <div className="relative overflow-hidden rounded-lg bg-white aspect-[4/3]">
+                <ProductImage src={p.image_url} alt={p.name} className="h-full w-full object-contain p-2 transition-transform duration-700 group-hover:scale-[1.03]" />
                 <span className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[10px] uppercase tracking-wider text-primary">{p.collection}</span>
               </div>
               <div className="mt-5">
