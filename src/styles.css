@@ -109,15 +109,18 @@
   user-select: none;
 }
 
-/* Brand wordmark */
+/* Brand wordmark — saphir profond avec reflet champagne */
 .brand-wordmark {
   font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  background: var(--gradient-royal);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  background: linear-gradient(135deg, #081E47 0%, #1E4FA8 40%, #D4B87A 75%, #1E4FA8 100%);
+  background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  animation: sloganShimmer 12s linear infinite;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.4);
 }
 
 /* Slogan animation */
@@ -132,12 +135,21 @@
 }
 .slogan-animated {
   display: inline-block;
-  background: linear-gradient(90deg, #1E90FF 0%, #4FA8FF 25%, #1E90FF 50%, #4FA8FF 75%, #1E90FF 100%);
+  background: linear-gradient(90deg, #0B2A5B 0%, #1E4FA8 25%, #D4B87A 50%, #1E4FA8 75%, #0B2A5B 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: sloganReveal 1.2s ease-out both, sloganShimmer 6s linear infinite 1.2s;
+  animation: sloganReveal 1.2s ease-out both, sloganShimmer 8s linear infinite 1.2s;
+}
+
+/* Filet doré décoratif — séparateur de luxe */
+.gold-rule {
+  display: inline-block;
+  height: 1px;
+  width: 64px;
+  background: linear-gradient(90deg, transparent, #D4B87A, transparent);
+  vertical-align: middle;
 }
 
 /* Testimonial marquee */
