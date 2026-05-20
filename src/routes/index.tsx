@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import heroBed from "@/assets/hero-bed-clean.png";
 import logo from "@/assets/logo-kingdevshop.png";
 import { listProducts, type Product } from "@/lib/products.functions";
+import { getSiteContent } from "@/lib/admin.functions";
 import { ArrowRight, Sparkles, ShieldCheck, Truck, Star } from "lucide-react";
 import { ProductImage } from "@/components/ProductImage";
 import { useCart } from "@/lib/cart";
