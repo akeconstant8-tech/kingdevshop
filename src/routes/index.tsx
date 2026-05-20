@@ -21,9 +21,14 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const fetchFn = useServerFn(listProducts);
+  const contentFn = useServerFn(getSiteContent);
   const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn() });
+  const { data: content = {} } = useQuery({ queryKey: ["site-content"], queryFn: () => contentFn() });
   const { add, setOpen: setCartOpen } = useCart();
   const featured = products.slice(0, 4);
+  const heroTitle = (content as any).hero_title || "KING DEV SHOP";
+  const heroSlogan = (content as any).hero_slogan || "Un sommeil doux et réparateur avec King Dev Shop.";
+  const heroDesc = (content as any).hero_description || "Découvrez notre collection de draps confortables, pensés pour transformer chaque nuit en un moment de pur bien-être. 🛏️ ✨";
 
   return (
     <>
