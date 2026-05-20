@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Crown } from "lucide-react";
+import { Crown, Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/admin/login")({
   head: () => ({ meta: [{ title: "Espace Admin — King Dev Shop" }, { name: "robots", content: "noindex" }] }),
