@@ -1,5 +1,8 @@
 import { Link } from "@tanstack/react-router";
+import { Facebook } from "lucide-react";
 import logo from "@/assets/logo-kingdevshop.png";
+
+const FACEBOOK_URL = "https://www.facebook.com/share/1BB1KvBqSm/";
 
 export function SiteFooter() {
   return (
