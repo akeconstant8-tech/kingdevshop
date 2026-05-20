@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TemoignagesRouteImport } from './routes/temoignages'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as AProposRouteImport } from './routes/a-propos'
@@ -20,6 +21,11 @@ import { Route as AdminLoginRouteImport } from './routes/admin.login'
 const TemoignagesRoute = TemoignagesRouteImport.update({
   id: '/temoignages',
   path: '/temoignages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/temoignages': typeof TemoignagesRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/temoignages': typeof TemoignagesRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/a-propos': typeof AProposRoute
   '/collection': typeof CollectionRoute
   '/contact': typeof ContactRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/temoignages': typeof TemoignagesRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/collection'
     | '/contact'
+    | '/reset-password'
     | '/temoignages'
     | '/admin/login'
     | '/admin/'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/collection'
     | '/contact'
+    | '/reset-password'
     | '/temoignages'
     | '/admin/login'
     | '/admin'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/collection'
     | '/contact'
+    | '/reset-password'
     | '/temoignages'
     | '/admin/login'
     | '/admin/'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   AProposRoute: typeof AProposRoute
   CollectionRoute: typeof CollectionRoute
   ContactRoute: typeof ContactRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TemoignagesRoute: typeof TemoignagesRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/temoignages'
       fullPath: '/temoignages'
       preLoaderRoute: typeof TemoignagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   AProposRoute: AProposRoute,
   CollectionRoute: CollectionRoute,
   ContactRoute: ContactRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TemoignagesRoute: TemoignagesRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -187,3 +208,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
