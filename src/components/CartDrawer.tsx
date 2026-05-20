@@ -193,9 +193,19 @@ export function CartDrawer() {
 
         {items.length > 0 && (
           <footer className="border-t border-border px-5 py-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Total</span>
-              <span className="font-display text-2xl">{total.toLocaleString("fr-FR")} FCFA</span>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>{count} article{count > 1 ? "s" : ""}</span>
+                <span>{total.toLocaleString("fr-FR")} FCFA</span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Livraison ({delivery.city})</span>
+                <span>{delivery.fee.toLocaleString("fr-FR")} FCFA</span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <span className="text-sm font-medium">Total TTC</span>
+                <span className="font-display text-2xl">{grandTotal.toLocaleString("fr-FR")} FCFA</span>
+              </div>
             </div>
             {step === "cart" ? (
               <>
