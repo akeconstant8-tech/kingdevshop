@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Crown, Eye, EyeOff } from "lucide-react";
+import { Crown } from "lucide-react";
+import { PasswordField } from "@/components/PasswordField";
 
 export const Route = createFileRoute("/admin/login")({
   head: () => ({ meta: [{ title: "Espace Admin — King Dev Shop" }, { name: "robots", content: "noindex" }] }),
@@ -13,21 +14,29 @@ function AdminLogin() {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [confirm, setConfirm] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const reset = () => { setErr(null); setInfo(null); };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErr(null); setInfo(null); setLoading(true);
+    reset(); setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/admin" } });
+        if (password !== confirm) throw new Error("Les mots de passe ne correspondent pas.");
+        const { error } = await supabase.auth.signUp({
+          email, password,
+          options: { emailRedirectTo: window.location.origin + "/admin" },
+        });
         if (error) throw error;
         navigate({ to: "/admin" });
       } else if (mode === "forgot") {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/reset-password" });
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + "/reset-password",
+        });
         if (error) throw error;
         setInfo("Email de réinitialisation envoyé. Vérifiez votre boîte de réception.");
       } else {
@@ -48,11 +57,6 @@ function AdminLogin() {
             <Crown className="h-6 w-6" />
           </span>
         </div>
-        <h1 className="mt-6 text-center font-display text-3xl">Espace Administrateur</h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground">
-          {mode === "login" ? "Connectez-vous pour gérer la boutique" : "Créer le compte administrateur"}
-        </p>
-
         <h1 className="mt-6 text-center font-display text-3xl">
           {mode === "forgot" ? "Mot de passe oublié" : "Espace Administrateur"}
         </h1>
@@ -65,53 +69,58 @@ function AdminLogin() {
         <form onSubmit={submit} className="mt-8 space-y-4">
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Email</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none" />
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none"
+            />
           </div>
+
           {mode !== "forgot" && (
-            <div>
-              <label className="text-xs uppercase tracking-wider text-muted-foreground">Mot de passe</label>
-              <div className="relative mt-1">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-4 py-2.5 pr-11 text-sm focus:border-primary outline-none"
+            <>
+              <PasswordField
+                label="Mot de passe"
+                value={password}
+                onChange={setPassword}
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              />
+              {mode === "signup" && (
+                <PasswordField
+                  label="Confirmer le mot de passe"
+                  value={confirm}
+                  onChange={setConfirm}
+                  autoComplete="new-password"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-primary"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              )}
               {mode === "login" && (
                 <button
                   type="button"
-                  onClick={() => { setMode("forgot"); setErr(null); setInfo(null); }}
-                  className="mt-2 text-xs text-primary hover:underline"
+                  onClick={() => { setMode("forgot"); reset(); }}
+                  className="text-xs text-primary hover:underline"
                 >
                   Mot de passe oublié ?
                 </button>
               )}
-            </div>
+            </>
           )}
+
           {err && <p className="text-sm text-destructive">{err}</p>}
           {info && <p className="text-sm text-primary">{info}</p>}
+
           <button disabled={loading} className="w-full rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50">
             {loading ? "..." : mode === "login" ? "Se connecter" : mode === "signup" ? "Créer le compte" : "Envoyer le lien"}
           </button>
         </form>
 
         {mode === "forgot" ? (
-          <button onClick={() => { setMode("login"); setErr(null); setInfo(null); }} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
+          <button onClick={() => { setMode("login"); reset(); }} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
             ← Retour à la connexion
           </button>
         ) : (
-          <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setErr(null); setInfo(null); }} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
+          <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); reset(); setConfirm(""); }} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
             {mode === "login" ? "Première fois ? Créer le compte admin" : "Déjà un compte ? Se connecter"}
           </button>
         )}
