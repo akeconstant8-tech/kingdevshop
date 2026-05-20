@@ -18,8 +18,8 @@ import { Crown, LogOut, Trash2, Upload, Plus, Package, MessageSquare, Star, Shop
 export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Administration — King Dev Shop" }, { name: "robots", content: "noindex" }] }),
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/admin/login" });
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) throw redirect({ to: "/admin/login" });
   },
   component: AdminDashboard,
 });
