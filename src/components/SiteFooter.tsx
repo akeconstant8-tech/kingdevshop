@@ -17,9 +17,6 @@ export function SiteFooter() {
             <p className="mt-6 max-w-md text-base text-primary-foreground/85">
               Un sommeil doux et réparateur avec King Dev Shop.
             </p>
-            <p className="mt-6 max-w-md text-base text-primary-foreground/85">
-              Un sommeil doux et réparateur avec King Dev Shop.
-            </p>
             <a
               href={FACEBOOK_URL}
               target="_blank"
