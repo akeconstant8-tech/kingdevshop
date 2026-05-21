@@ -14,9 +14,12 @@ export function SiteFooter() {
               <img src={logo} alt="King Dev Shop" className="h-12 w-12 object-contain brightness-0 invert" />
               <span className="font-display text-2xl font-extrabold tracking-[0.18em]">KING DEV SHOP</span>
             </div>
-            <p className="mt-6 max-w-md text-base text-primary-foreground/85">
-              Un sommeil doux et réparateur avec King Dev Shop.
-            </p>
+            <div className="mt-8 flex items-center gap-4 max-w-md">
+              <span className="gold-rule shrink-0" />
+              <p className="font-script text-2xl md:text-3xl leading-tight tracking-wide bg-gradient-to-r from-[#D4B87A] via-[#F5E4B0] to-[#B89455] bg-clip-text text-transparent">
+                Un sommeil doux et réparateur avec King&nbsp;Dev&nbsp;Shop.
+              </p>
+            </div>
             <a
               href={FACEBOOK_URL}
               target="_blank"
