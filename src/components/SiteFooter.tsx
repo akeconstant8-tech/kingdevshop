@@ -44,7 +44,16 @@ export function SiteFooter() {
             <h4 className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">Contact</h4>
             <ul className="mt-4 space-y-2 text-sm text-primary-foreground/80">
               <li>contact@kingdevshop.com</li>
-              <li>WhatsApp : +225 07 11 25 76 55</li>
+              <li>
+                <a href="https://wa.me/2250711257655" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-primary-foreground">
+                  <span aria-hidden>💬</span> WhatsApp : +225 07 11 25 76 55
+                </a>
+              </li>
+              <li>
+                <a href="tel:+2250711257655" className="inline-flex items-center gap-2 hover:text-primary-foreground">
+                  <span aria-hidden>📞</span> +225 07 11 25 76 55
+                </a>
+              </li>
               <li>Bonoua, Carrefour 8 kilos</li>
             </ul>
           </div>
