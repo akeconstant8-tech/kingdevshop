@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, Facebook } from "lucide-react";
+import { ShoppingBag, Facebook, Music2 } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import logo from "@/assets/logo-kingdevshop.png";
@@ -45,6 +45,15 @@ export function SiteHeader() {
             className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/70 transition-colors hover:border-primary hover:text-primary"
           >
             <Facebook className="h-4 w-4" />
+          </a>
+          <a
+            href="https://www.tiktok.com/@king.dav.shop"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Compte TikTok King Dev Shop"
+            className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/70 transition-colors hover:border-primary hover:text-primary"
+          >
+            <Music2 className="h-4 w-4" />
           </a>
           <button
             onClick={() => setCartOpen(true)}

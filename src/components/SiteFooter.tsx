@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook } from "lucide-react";
+import { Facebook, Music2 } from "lucide-react";
 import logo from "@/assets/logo-kingdevshop.png";
 
 const FACEBOOK_URL = "https://www.facebook.com/share/1BB1KvBqSm/";
+const TIKTOK_URL = "https://www.tiktok.com/@king.dav.shop";
 
 export function SiteFooter() {
   return (
@@ -20,16 +21,28 @@ export function SiteFooter() {
                 Un sommeil doux et réparateur avec King&nbsp;Dev&nbsp;Shop.
               </p>
             </div>
-            <a
-              href={FACEBOOK_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Suivez-nous sur Facebook"
-              className="mt-6 inline-flex items-center gap-2 rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] backdrop-blur transition hover:border-primary-foreground/70 hover:bg-primary-foreground/20"
-            >
-              <Facebook className="h-4 w-4" />
-              Suivez-nous sur Facebook
-            </a>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a
+                href={FACEBOOK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Suivez-nous sur Facebook"
+                className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] backdrop-blur transition hover:border-primary-foreground/70 hover:bg-primary-foreground/20"
+              >
+                <Facebook className="h-4 w-4" />
+                Facebook
+              </a>
+              <a
+                href={TIKTOK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Suivez-nous sur TikTok"
+                className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] backdrop-blur transition hover:border-primary-foreground/70 hover:bg-primary-foreground/20"
+              >
+                <Music2 className="h-4 w-4" />
+                TikTok
+              </a>
+            </div>
           </div>
           <div>
             <h4 className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">Navigation</h4>
