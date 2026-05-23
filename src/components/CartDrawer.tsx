@@ -48,9 +48,9 @@ export function CartDrawer() {
         customer_name: parsed.data.name,
         customer_phone: parsed.data.phone,
         customer_address: `${parsed.data.address} — Livraison ${delivery.city} (${delivery.fee.toLocaleString("fr-FR")} FCFA)`,
-        items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
-        total: grandTotal,
+        items: items.map(i => ({ id: i.id, qty: i.qty })),
       }});
+
     } catch (err) {
       console.error("Order save failed", err);
     }
