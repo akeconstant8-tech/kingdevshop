@@ -65,17 +65,37 @@ const orderInput = z.object({
   customer_phone: z.string().trim().min(1).max(40),
   customer_address: z.string().trim().min(1).max(500),
   items: z.array(z.object({
-    id: z.string(), name: z.string(), price: z.number(), qty: z.number(),
+    id: z.string().uuid(), qty: z.number().int().min(1).max(50),
   })).min(1).max(100),
-  total: z.number().min(0),
 });
 export const createOrder = createServerFn({ method: "POST" })
   .inputValidator((i) => orderInput.parse(i))
   .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("orders").insert(data);
+    const ids = Array.from(new Set(data.items.map((i) => i.id)));
+    const { data: products, error: pErr } = await supabaseAdmin
+      .from("products").select("id, name, price, in_stock").in("id", ids);
+    if (pErr) throw new Error(pErr.message);
+    const byId = new Map((products ?? []).map((p: any) => [p.id, p]));
+    if (byId.size !== ids.length) throw new Error("Un ou plusieurs produits sont introuvables.");
+
+    const verifiedItems = data.items.map((i) => {
+      const p: any = byId.get(i.id);
+      if (!p.in_stock) throw new Error(`Produit indisponible : ${p.name}`);
+      return { id: p.id, name: p.name, price: Number(p.price), qty: i.qty };
+    });
+    const total = verifiedItems.reduce((s, i) => s + i.price * i.qty, 0);
+
+    const { error } = await supabaseAdmin.from("orders").insert({
+      customer_name: data.customer_name,
+      customer_phone: data.customer_phone,
+      customer_address: data.customer_address,
+      items: verifiedItems,
+      total,
+    });
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { ok: true, total };
   });
+
 
 /* ============== ADMIN ============== */
 
