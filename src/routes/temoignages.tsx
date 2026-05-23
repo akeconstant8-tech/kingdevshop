@@ -73,10 +73,12 @@ function SubmitForm() {
 
   const upload = async (f: File) => {
     if (f.size > 5 * 1024 * 1024) { setMsg({ ok: false, text: "Image trop lourde (max 5 Mo)." }); return; }
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(f.type)) { setMsg({ ok: false, text: "Format non supporté (JPG, PNG, WEBP ou GIF)." }); return; }
     setUploading(true); setMsg(null);
     try {
       const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const path = `submissions/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error } = await supabase.storage.from("testimonial-photos").upload(path, f, { upsert: false, contentType: f.type });
       if (error) throw error;
       const { data } = supabase.storage.from("testimonial-photos").getPublicUrl(path);
@@ -84,6 +86,7 @@ function SubmitForm() {
     } catch (e: any) { setMsg({ ok: false, text: e.message ?? "Échec de l'envoi." }); }
     finally { setUploading(false); }
   };
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
