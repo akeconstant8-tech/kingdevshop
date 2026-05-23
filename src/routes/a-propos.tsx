@@ -44,7 +44,7 @@ function About() {
             <li><strong className="text-foreground">Qualité</strong> — Des tissus doux et résistants.</li>
             <li><strong className="text-foreground">Prix juste</strong> — Parures 6 pièces à 13 000 FCFA.</li>
             <li><strong className="text-foreground">Prix juste</strong> — Parures 4 pièces à 10 000 FCFA.</li>
-            <li><strong className="text-foreground">Prix juste</strong> — Parure 4 pièces Belle Pois Rouges à 8 500 FCFA.</li>
+            
             <li><strong className="text-foreground">Prix juste</strong> — Livraison rapide à prix doux dans toute la Côte d'Ivoire.</li>
             <li><strong className="text-foreground">Service client</strong> — Commande simple via WhatsApp.</li>
           </ul>
