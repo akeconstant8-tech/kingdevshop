@@ -5,13 +5,16 @@ import { useMemo, useState } from "react";
 import { ArrowRight, Star, Quote, MessageCircle, Upload, Check } from "lucide-react";
 import { listPublicTestimonials, submitTestimonial } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
+import { TESTIMONIAL_PHOTOS_BUCKET } from "@/lib/images";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/temoignages")({
-  head: () => ({
-    meta: [
-      { title: "Témoignages — King Dev Shop" },
-      { name: "description", content: "Découvrez les avis de nos clients satisfaits et partagez votre propre expérience." },
-    ],
+  loader: async () => ({ testimonials: await listPublicTestimonials().catch(() => []) }),
+  head: () => pageHead({
+    title: "Avis clients et témoignages — King Dev Shop",
+    description: "Découvrez les avis de nos clients satisfaits partout en Côte d'Ivoire et partagez votre propre expérience King Dev Shop.",
+    path: "/temoignages",
   }),
   component: TemoignagesPage,
 });
@@ -30,7 +33,7 @@ function StarRating({ count }: { count: number }) {
 
 function Avatar({ t }: { t: T }) {
   if (t.photo_url) {
-    return <img src={t.photo_url} alt={t.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/30" />;
+    return <img src={t.photo_url} alt={t.name} loading="lazy" decoding="async" width={40} height={40} className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/30" />;
   }
   return (
     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
@@ -71,17 +74,18 @@ function SubmitForm() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const upload = async (f: File) => {
-    if (f.size > 5 * 1024 * 1024) { setMsg({ ok: false, text: "Image trop lourde (max 5 Mo)." }); return; }
+  const upload = async (original: File) => {
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(f.type)) { setMsg({ ok: false, text: "Format non supporté (JPG, PNG, WEBP ou GIF)." }); return; }
+    if (!allowedTypes.includes(original.type)) { setMsg({ ok: false, text: "Format non supporté (JPG, PNG, WEBP ou GIF)." }); return; }
     setUploading(true); setMsg(null);
     try {
+      const f = await compressImage(original, 800);
+      if (f.size > 5 * 1024 * 1024) { setMsg({ ok: false, text: "Image trop lourde (max 5 Mo)." }); return; }
       const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
       const path = `submissions/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from("testimonial-photos").upload(path, f, { upsert: false, contentType: f.type });
+      const { error } = await supabase.storage.from(TESTIMONIAL_PHOTOS_BUCKET).upload(path, f, { upsert: false, contentType: f.type });
       if (error) throw error;
-      const { data } = supabase.storage.from("testimonial-photos").getPublicUrl(path);
+      const { data } = supabase.storage.from(TESTIMONIAL_PHOTOS_BUCKET).getPublicUrl(path);
       setPhotoUrl(data.publicUrl);
     } catch (e: any) { setMsg({ ok: false, text: e.message ?? "Échec de l'envoi." }); }
     finally { setUploading(false); }
@@ -141,8 +145,8 @@ function SubmitForm() {
           <label className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2.5 text-sm cursor-pointer hover:border-primary">
             <Upload className="h-4 w-4" />
             {photoUrl ? "Changer la photo" : "Choisir une photo"}
-            <input type="file" accept="image/*" className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }} />
+            <input type="file" accept="image/*" className="hidden" disabled={uploading}
+              onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) upload(f); }} />
           </label>
           {uploading && <span className="text-xs text-muted-foreground">Envoi…</span>}
           {photoUrl && <img src={photoUrl} alt="" className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/30" />}
@@ -163,8 +167,9 @@ function SubmitForm() {
 }
 
 function TemoignagesPage() {
+  const initial = Route.useLoaderData();
   const fn = useServerFn(listPublicTestimonials);
-  const { data: testimonials = [] } = useQuery({ queryKey: ["public-testimonials"], queryFn: () => fn() });
+  const { data: testimonials = [] } = useQuery({ queryKey: ["public-testimonials"], queryFn: () => fn(), initialData: initial.testimonials, staleTime: 30_000 });
   const list = testimonials as T[];
 
   const cities = useMemo(() => {

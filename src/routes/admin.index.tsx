@@ -4,16 +4,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  listProducts, createProduct, deleteProduct, getMyAdminStatus, bootstrapFirstAdmin, type Product,
+  listProducts, createProduct, updateProduct, deleteProduct, getMyAdminStatus, type Product,
 } from "@/lib/products.functions";
 import {
   listMessages, markMessageRead, deleteMessage,
   listAllTestimonials, createTestimonial, updateTestimonial, deleteTestimonial,
   listOrders, updateOrderStatus, deleteOrder,
-  getSiteContent, updateSiteContent,
+  getSiteContent, updateSiteContent, SITE_CONTENT_KEYS,
 } from "@/lib/admin.functions";
+import { PRODUCT_IMAGES_BUCKET } from "@/lib/images";
+import { compressImage } from "@/lib/image-compress";
+import { formatFcfa, orderReference } from "@/lib/order-logic";
 import { ProductImage } from "@/components/ProductImage";
-import { Crown, LogOut, Trash2, Upload, Plus, Package, MessageSquare, Star, ShoppingBag, Home as HomeIcon, Check, Eye, EyeOff } from "lucide-react";
+import {
+  Crown, LogOut, Trash2, Upload, Plus, Package, MessageSquare, Star, ShoppingBag, Home as HomeIcon,
+  Check, EyeOff, ImagePlus, ImageOff, X, Pencil, PackageX, PackageCheck,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Administration — King Dev Shop" }, { name: "robots", content: "noindex" }] }),
@@ -32,11 +38,11 @@ function AdminDashboard() {
   const nav = useNavigate();
   const [sessionReady, setSessionReady] = useState(false);
   const statusFn = useServerFn(getMyAdminStatus);
-  const bootstrapFn = useServerFn(bootstrapFirstAdmin);
-  const { data: status, refetch: refetchStatus } = useQuery({
+  const { data: status, error: statusError, isLoading: statusLoading, refetch: refetchStatus } = useQuery({
     queryKey: ["admin-status"],
     queryFn: () => statusFn(),
     enabled: sessionReady,
+    retry: false,
   });
   const [tab, setTab] = useState<Tab>("products");
 
@@ -50,16 +56,17 @@ function AdminDashboard() {
       }
       setSessionReady(true);
     });
-    return () => { mounted = false; };
+    // Session ended (sign-out in another tab, expired refresh token): leave the admin.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") nav({ to: "/admin/login" });
+    });
+    return () => { mounted = false; subscription.unsubscribe(); };
   }, [nav]);
 
   const logout = async () => { await supabase.auth.signOut(); nav({ to: "/admin/login" }); };
-  const claim = async () => {
-    try { await bootstrapFn(); await refetchStatus(); }
-    catch (e: any) { alert(e.message); }
-  };
 
-  if (!sessionReady) {
+  // Nothing of the dashboard is shown until the server has confirmed the admin role.
+  if (!sessionReady || statusLoading) {
     return (
       <section className="mx-auto max-w-md px-6 py-20 text-center">
         <Crown className="mx-auto h-10 w-10 text-primary" />
@@ -69,15 +76,19 @@ function AdminDashboard() {
     );
   }
 
-  if (status && !status.isAdmin) {
+  if (statusError || !status?.isAdmin) {
     return (
       <section className="mx-auto max-w-md px-6 py-20 text-center">
         <Crown className="mx-auto h-10 w-10 text-primary" />
-        <h1 className="mt-4 font-display text-3xl">Activer le rôle admin</h1>
+        <h1 className="mt-4 font-display text-3xl">{statusError ? "Vérification impossible" : "Accès refusé"}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Votre compte n'est pas encore administrateur. Si vous êtes le premier inscrit, cliquez pour devenir administrateur.
+          {statusError
+            ? `Vos droits n'ont pas pu être vérifiés : ${(statusError as Error).message}`
+            : "Ce compte n'a pas les droits d'administrateur de la boutique."}
         </p>
-        <button onClick={claim} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground">Devenir administrateur</button>
+        {statusError && (
+          <button onClick={() => refetchStatus()} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground">Réessayer</button>
+        )}
         <button onClick={logout} className="mt-3 block mx-auto text-xs text-muted-foreground hover:text-primary">Se déconnecter</button>
       </section>
     );
@@ -130,44 +141,242 @@ function AdminDashboard() {
   );
 }
 
+/* =================== SHARED =================== */
+
+// Runs an admin action and always reports a failure, instead of failing silently.
+function useAdminAction(onDone: () => void) {
+  const [busy, setBusy] = useState(false);
+  const run = async (action: () => Promise<unknown>, confirmMessage?: string) => {
+    if (confirmMessage && !confirm(confirmMessage)) return;
+    setBusy(true);
+    try {
+      await action();
+      onDone();
+    } catch (e: any) {
+      alert(`L'opération a échoué : ${e?.message ?? "erreur inconnue"}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { busy, run };
+}
+
+function QueryError({ error }: { error: unknown }) {
+  if (!error) return null;
+  return (
+    <p role="alert" className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+      Chargement impossible : {(error as Error).message}
+    </p>
+  );
+}
+
+function TextInput({ label, value, onChange, type = "text", required, list, min, step }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean;
+  list?: string; min?: number; step?: number;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      <input type={type} value={value} required={required} list={list} min={min} step={step} onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none" />
+    </label>
+  );
+}
+
+function TextArea({ label, value, onChange, rows = 3 }: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
+  return (
+    <label className="block">
+      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
+        className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none resize-none" />
+    </label>
+  );
+}
+
 /* =================== PRODUCTS =================== */
+
+type UploadedImage = { path: string; url: string };
+const COLLECTIONS_LIST_ID = "admin-collections";
+
+// Photos are resized in the browser first (max 1600 px, WebP/JPEG): phone photos of
+// several MB would otherwise slow the shop down for every visitor.
+async function uploadProductImage(original: File): Promise<UploadedImage> {
+  if (!original.type.startsWith("image/")) throw new Error("Le fichier choisi n'est pas une image.");
+  const f = await compressImage(original, 1600);
+  const ext = f.name.split(".").pop() || "jpg";
+  const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(path, f, { upsert: false, contentType: f.type });
+  if (error) throw error;
+  const { data } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path);
+  return { path, url: data.publicUrl };
+}
+
+async function removeUploadedImage(path: string) {
+  const { error } = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove([path]);
+  if (error) throw error;
+}
+
+type ProductFields = {
+  name: string; collection: string; price: number; material: string | null; description: string | null; in_stock: boolean;
+};
 
 function ProductsTab() {
   const qc = useQueryClient();
   const listFn = useServerFn(listProducts);
   const createFn = useServerFn(createProduct);
-  const delFn = useServerFn(deleteProduct);
-  const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => listFn() });
+  const { data: products = [], error } = useQuery({ queryKey: ["products"], queryFn: () => listFn() });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["products"] });
+  const collections = Array.from(new Set(products.map((p: Product) => p.collection))).sort((a, b) => a.localeCompare(b, "fr"));
+  const outOfStock = products.filter((p: Product) => !p.in_stock).length;
 
   return (
     <>
-      <AddProductForm onCreate={async (p) => { await createFn({ data: p }); qc.invalidateQueries({ queryKey: ["products"] }); }} />
+      {/* Suggests existing collection names to avoid near-duplicates ("Six Pièces" / "6 pièces"). */}
+      <datalist id={COLLECTIONS_LIST_ID}>
+        {collections.map((c) => <option key={c} value={c} />)}
+      </datalist>
+      <AddProductForm onCreate={async (p) => { await createFn({ data: p }); refresh(); }} />
       <div className="mt-10">
-        <h2 className="font-display text-2xl">Produits ({products.length})</h2>
+        <h2 className="font-display text-2xl">
+          Produits ({products.length}){outOfStock > 0 && <span className="ml-2 text-sm text-destructive">· {outOfStock} en rupture</span>}
+        </h2>
+        <QueryError error={error} />
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p: Product) => (
-            <article key={p.id} className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="aspect-[4/3] bg-secondary">
-                <ProductImage src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
-              </div>
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-display text-lg">{p.name}</h3>
-                    <p className="text-xs text-muted-foreground">{p.collection} • {p.material}</p>
-                  </div>
-                  <span className="text-sm font-medium">{Number(p.price).toLocaleString("fr-FR")} FCFA</span>
-                </div>
-                <button onClick={async () => { if (confirm("Supprimer ?")) { await delFn({ data: { id: p.id } }); qc.invalidateQueries({ queryKey: ["products"] }); } }}
-                  className="mt-3 inline-flex items-center gap-1 text-xs text-destructive hover:underline">
-                  <Trash2 className="h-3 w-3" /> Supprimer
-                </button>
-              </div>
-            </article>
-          ))}
+          {products.map((p: Product) => <ProductCard key={p.id} product={p} onChanged={refresh} />)}
         </div>
       </div>
     </>
+  );
+}
+
+function ProductCard({ product: p, onChanged }: { product: Product; onChanged: () => void }) {
+  const updateFn = useServerFn(updateProduct);
+  const delFn = useServerFn(deleteProduct);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  const run = async (label: string, action: () => Promise<unknown>) => {
+    setBusy(label);
+    try { await action(); onChanged(); }
+    catch (e: any) { alert(`L'opération a échoué : ${e?.message ?? "erreur inconnue"}`); }
+    finally { setBusy(null); }
+  };
+
+  const replaceImage = (f: File) => run("Envoi de l'image…", async () => {
+    const uploaded = await uploadProductImage(f);
+    try { await updateFn({ data: { id: p.id, image_url: uploaded.url } }); }
+    catch (e) { await removeUploadedImage(uploaded.path).catch(() => {}); throw e; }
+  });
+
+  const removeImage = () => {
+    if (!confirm("Retirer l'image de ce produit ?")) return;
+    run("Suppression de l'image…", () => updateFn({ data: { id: p.id, image_url: null } }));
+  };
+
+  const toggleStock = () =>
+    run(p.in_stock ? "Mise en rupture…" : "Remise en stock…", () => updateFn({ data: { id: p.id, in_stock: !p.in_stock } }));
+
+  const removeProduct = () => {
+    if (!confirm("Supprimer ce produit et son image ?")) return;
+    run("Suppression…", () => delFn({ data: { id: p.id } }));
+  };
+
+  return (
+    <article className={`rounded-xl border bg-card overflow-hidden ${p.in_stock ? "border-border" : "border-destructive/40"}`}>
+      <div className="relative aspect-[4/3] bg-secondary">
+        <ProductImage src={p.image_url} alt={p.name} sizes="(min-width: 1024px) 33vw, 100vw" className="h-full w-full object-cover" />
+        {!p.in_stock && (
+          <span className="absolute left-3 top-3 rounded-full bg-destructive px-3 py-1 text-[10px] uppercase tracking-wider text-white">Rupture de stock</span>
+        )}
+        {busy && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-xs">{busy}</div>
+        )}
+      </div>
+      <div className="p-4">
+        {editing ? (
+          <ProductEditForm
+            product={p}
+            onCancel={() => setEditing(false)}
+            onSave={(fields) => run("Enregistrement…", async () => {
+              await updateFn({ data: { id: p.id, ...fields } });
+              setEditing(false);
+            })}
+            disabled={!!busy}
+          />
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-display text-lg">{p.name}</h3>
+                <p className="text-xs text-muted-foreground">{p.collection}{p.material ? ` • ${p.material}` : ""}</p>
+              </div>
+              <span className="text-sm font-medium whitespace-nowrap">{formatFcfa(p.price)}</span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button onClick={() => setEditing(true)} disabled={!!busy}
+                className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs hover:border-primary disabled:opacity-50">
+                <Pencil className="h-3 w-3" /> Modifier
+              </button>
+              <button onClick={toggleStock} disabled={!!busy}
+                className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs hover:border-primary disabled:opacity-50">
+                {p.in_stock ? <><PackageX className="h-3 w-3" /> Mettre en rupture</> : <><PackageCheck className="h-3 w-3" /> Remettre en stock</>}
+              </button>
+              <label className={`inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs ${busy ? "opacity-50" : "cursor-pointer hover:border-primary"}`}>
+                <ImagePlus className="h-3 w-3" /> {p.image_url ? "Changer l'image" : "Ajouter une image"}
+                <input type="file" accept="image/*" className="hidden" disabled={!!busy}
+                  onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) replaceImage(f); }} />
+              </label>
+              {p.image_url && (
+                <button onClick={removeImage} disabled={!!busy}
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs hover:border-primary disabled:opacity-50">
+                  <ImageOff className="h-3 w-3" /> Retirer l'image
+                </button>
+              )}
+              <button onClick={removeProduct} disabled={!!busy}
+                className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1.5 text-xs text-destructive disabled:opacity-50">
+                <Trash2 className="h-3 w-3" /> Supprimer
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function ProductEditForm({ product, onCancel, onSave, disabled }: {
+  product: Product; onCancel: () => void; onSave: (fields: ProductFields) => void; disabled: boolean;
+}) {
+  const [name, setName] = useState(product.name);
+  const [collection, setCollection] = useState(product.collection);
+  const [price, setPrice] = useState(String(Number(product.price)));
+  const [material, setMaterial] = useState(product.material ?? "");
+  const [description, setDescription] = useState(product.description ?? "");
+  const [inStock, setInStock] = useState(product.in_stock);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      name: name.trim(), collection: collection.trim(), price: Number(price),
+      material: material.trim() || null, description: description.trim() || null, in_stock: inStock,
+    });
+  };
+
+  return (
+    <form onSubmit={submit} className="grid gap-3">
+      <TextInput label="Nom" value={name} onChange={setName} required />
+      <TextInput label="Collection" value={collection} onChange={setCollection} required list={COLLECTIONS_LIST_ID} />
+      <TextInput label="Prix (FCFA)" type="number" min={0} step={1} value={price} onChange={setPrice} required />
+      <TextInput label="Matière" value={material} onChange={setMaterial} />
+      <TextArea label="Description" value={description} onChange={setDescription} />
+      <label className="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={inStock} onChange={(e) => setInStock(e.target.checked)} /> En stock
+      </label>
+      <div className="flex gap-2">
+        <button type="submit" disabled={disabled} className="rounded-full bg-primary px-4 py-2 text-xs text-primary-foreground disabled:opacity-50">Enregistrer</button>
+        <button type="button" onClick={onCancel} disabled={disabled} className="rounded-full border border-border px-4 py-2 text-xs">Annuler</button>
+      </div>
+    </form>
   );
 }
 
@@ -178,21 +387,29 @@ function AddProductForm({ onCreate }: { onCreate: (p: any) => Promise<void> }) {
   const [material, setMaterial] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>("");
+  const [image, setImage] = useState<UploadedImage | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
+  // Uploading a new image replaces (and deletes) the one picked before.
   const upload = async (f: File) => {
-    setUploading(true);
+    setUploading(true); setMsg(null);
     try {
-      const ext = f.name.split(".").pop() || "jpg";
-      const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from("product-images").upload(path, f, { upsert: false, contentType: f.type });
-      if (error) throw error;
-      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-      setImageUrl(data.publicUrl);
-    } catch (e: any) { setMsg(e.message); } finally { setUploading(false); }
+      const previous = image;
+      const uploaded = await uploadProductImage(f);
+      setFile(f); setImage(uploaded);
+      if (previous) await removeUploadedImage(previous.path);
+    } catch (e: any) { setMsg({ ok: false, text: e.message }); } finally { setUploading(false); }
+  };
+
+  const discardImage = async () => {
+    if (!image) return;
+    setUploading(true); setMsg(null);
+    try {
+      await removeUploadedImage(image.path);
+      setFile(null); setImage(null);
+    } catch (e: any) { setMsg({ ok: false, text: e.message }); } finally { setUploading(false); }
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -200,12 +417,12 @@ function AddProductForm({ onCreate }: { onCreate: (p: any) => Promise<void> }) {
     setSaving(true); setMsg(null);
     try {
       await onCreate({
-        name, collection, price: Number(price), material: material || null,
-        description: description || null, image_url: imageUrl || null, in_stock: true,
+        name: name.trim(), collection: collection.trim(), price: Number(price), material: material.trim() || null,
+        description: description.trim() || null, image_url: image?.url ?? null, in_stock: true,
       });
-      setName(""); setPrice(""); setMaterial(""); setDescription(""); setFile(null); setImageUrl("");
-      setMsg("Produit ajouté ✓");
-    } catch (e: any) { setMsg(e.message); } finally { setSaving(false); }
+      setName(""); setPrice(""); setMaterial(""); setDescription(""); setFile(null); setImage(null);
+      setMsg({ ok: true, text: "Produit ajouté ✓" });
+    } catch (e: any) { setMsg({ ok: false, text: e.message }); } finally { setSaving(false); }
   };
 
   return (
@@ -213,29 +430,35 @@ function AddProductForm({ onCreate }: { onCreate: (p: any) => Promise<void> }) {
       <h2 className="flex items-center gap-2 font-display text-2xl"><Plus className="h-5 w-5" /> Nouveau produit</h2>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <TextInput label="Nom" value={name} onChange={setName} required />
-        <TextInput label="Collection" value={collection} onChange={setCollection} required />
-        <TextInput label="Prix (FCFA)" type="number" value={price} onChange={setPrice} required />
+        <TextInput label="Collection" value={collection} onChange={setCollection} required list={COLLECTIONS_LIST_ID} />
+        <TextInput label="Prix (FCFA)" type="number" min={0} step={1} value={price} onChange={setPrice} required />
         <TextInput label="Matière" value={material} onChange={setMaterial} />
         <div className="sm:col-span-2">
-          <label className="text-xs uppercase tracking-wider text-muted-foreground">Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-            className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none resize-none" />
+          <TextArea label="Description" value={description} onChange={setDescription} />
         </div>
         <div className="sm:col-span-2">
-          <label className="text-xs uppercase tracking-wider text-muted-foreground">Photo du produit</label>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Photo du produit</span>
           <div className="mt-1 flex items-center gap-3">
             <label className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2.5 text-sm cursor-pointer hover:border-primary">
               <Upload className="h-4 w-4" />
               {file ? file.name : "Choisir une image"}
-              <input type="file" accept="image/*" capture="environment" className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); upload(f); } }} />
+              <input type="file" accept="image/*" className="hidden" disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) upload(f); }} />
             </label>
             {uploading && <span className="text-xs text-muted-foreground">Envoi…</span>}
-            {imageUrl && <img src={imageUrl} alt="" className="h-12 w-12 rounded object-cover" />}
+            {image && (
+              <div className="relative">
+                <img src={image.url} alt="" className="h-12 w-12 rounded object-cover" />
+                <button type="button" onClick={discardImage} disabled={uploading} aria-label="Retirer l'image"
+                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-      {msg && <p className="mt-4 text-sm">{msg}</p>}
+      {msg && <p role={msg.ok ? undefined : "alert"} className={`mt-4 text-sm ${msg.ok ? "" : "text-destructive"}`}>{msg.text}</p>}
       <button disabled={saving || uploading} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground hover:opacity-90 disabled:opacity-50">
         {saving ? "Enregistrement…" : "Ajouter le produit"}
       </button>
@@ -249,10 +472,10 @@ function HomeTab() {
   const qc = useQueryClient();
   const getFn = useServerFn(getSiteContent);
   const updateFn = useServerFn(updateSiteContent);
-  const { data: content } = useQuery({ queryKey: ["site-content"], queryFn: () => getFn() });
+  const { data: content, error } = useQuery({ queryKey: ["site-content"], queryFn: () => getFn() });
   const [draft, setDraft] = useState<Record<string, string> | null>(null);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const c = draft ?? (content as Record<string, string> | undefined) ?? {};
   const set = (k: string, v: string) => setDraft({ ...(draft ?? content ?? {}), [k]: v });
@@ -260,29 +483,26 @@ function HomeTab() {
   const save = async () => {
     setSaving(true); setMsg(null);
     try {
-      const entries = Object.entries(c).map(([key, value]) => ({ key, value }));
+      const entries = SITE_CONTENT_KEYS.filter((key) => key in c).map((key) => ({ key, value: c[key] }));
       await updateFn({ data: { entries } });
       await qc.invalidateQueries({ queryKey: ["site-content"] });
       setDraft(null);
-      setMsg("Enregistré ✓");
-    } catch (e: any) { setMsg(e.message); } finally { setSaving(false); }
+      setMsg({ ok: true, text: "Enregistré ✓" });
+    } catch (e: any) { setMsg({ ok: false, text: e.message }); } finally { setSaving(false); }
   };
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 max-w-3xl">
       <h2 className="font-display text-2xl">Contenu de la page d'accueil</h2>
       <p className="mt-1 text-sm text-muted-foreground">Modifiez le titre, le slogan et la description du hero.</p>
+      <QueryError error={error} />
       <div className="mt-6 grid gap-4">
         <TextInput label="Titre principal" value={c.hero_title ?? ""} onChange={(v) => set("hero_title", v)} />
         <TextInput label="Slogan" value={c.hero_slogan ?? ""} onChange={(v) => set("hero_slogan", v)} />
-        <div>
-          <label className="text-xs uppercase tracking-wider text-muted-foreground">Description</label>
-          <textarea value={c.hero_description ?? ""} onChange={(e) => set("hero_description", e.target.value)} rows={4}
-            className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none resize-none" />
-        </div>
+        <TextArea label="Description" value={c.hero_description ?? ""} onChange={(v) => set("hero_description", v)} rows={4} />
       </div>
-      {msg && <p className="mt-4 text-sm">{msg}</p>}
-      <button onClick={save} disabled={saving} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground disabled:opacity-50">
+      {msg && <p role={msg.ok ? undefined : "alert"} className={`mt-4 text-sm ${msg.ok ? "" : "text-destructive"}`}>{msg.text}</p>}
+      <button onClick={save} disabled={saving || !content} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground disabled:opacity-50">
         {saving ? "Enregistrement…" : "Enregistrer"}
       </button>
     </div>
@@ -296,15 +516,15 @@ function MessagesTab() {
   const listFn = useServerFn(listMessages);
   const readFn = useServerFn(markMessageRead);
   const delFn = useServerFn(deleteMessage);
-  const { data: messages = [] } = useQuery({ queryKey: ["admin-messages"], queryFn: () => listFn() });
-
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-messages"] });
+  const { data: messages = [], error } = useQuery({ queryKey: ["admin-messages"], queryFn: () => listFn() });
+  const { busy, run } = useAdminAction(() => qc.invalidateQueries({ queryKey: ["admin-messages"] }));
 
   return (
     <div>
       <h2 className="font-display text-2xl">Messages ({messages.length})</h2>
+      <QueryError error={error} />
       <div className="mt-6 space-y-3">
-        {messages.length === 0 && <p className="text-sm text-muted-foreground">Aucun message pour l'instant.</p>}
+        {!error && messages.length === 0 && <p className="text-sm text-muted-foreground">Aucun message pour l'instant.</p>}
         {(messages as any[]).map((m) => (
           <article key={m.id} className={`rounded-xl border p-5 ${m.read ? "border-border bg-card" : "border-primary/40 bg-primary/5"}`}>
             <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -314,13 +534,13 @@ function MessagesTab() {
                 <p className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleString("fr-FR")}</p>
               </div>
               <div className="flex gap-2">
-                <button onClick={async () => { await readFn({ data: { id: m.id, read: !m.read } }); invalidate(); }}
-                  className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
+                <button disabled={busy} onClick={() => run(() => readFn({ data: { id: m.id, read: !m.read } }))}
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs disabled:opacity-50">
                   {m.read ? <EyeOff className="h-3 w-3" /> : <Check className="h-3 w-3" />}
                   {m.read ? "Non lu" : "Lu"}
                 </button>
-                <button onClick={async () => { if (confirm("Supprimer ?")) { await delFn({ data: { id: m.id } }); invalidate(); } }}
-                  className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1.5 text-xs text-destructive">
+                <button disabled={busy} onClick={() => run(() => delFn({ data: { id: m.id } }), "Supprimer ce message ?")}
+                  className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1.5 text-xs text-destructive disabled:opacity-50">
                   <Trash2 className="h-3 w-3" /> Supprimer
                 </button>
               </div>
@@ -341,12 +561,13 @@ function TestimonialsTab() {
   const createFn = useServerFn(createTestimonial);
   const updateFn = useServerFn(updateTestimonial);
   const delFn = useServerFn(deleteTestimonial);
-  const { data: testimonials = [] } = useQuery({ queryKey: ["admin-testimonials"], queryFn: () => listFn() });
+  const { data: testimonials = [], error } = useQuery({ queryKey: ["admin-testimonials"], queryFn: () => listFn() });
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin-testimonials"] });
     qc.invalidateQueries({ queryKey: ["public-testimonials"] });
   };
+  const { busy, run } = useAdminAction(invalidate);
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
@@ -361,7 +582,7 @@ function TestimonialsTab() {
       await createFn({ data: { name, location: location || null, text, rating, published: true } });
       setName(""); setLocation(""); setText(""); setRating(5);
       invalidate();
-    } catch (e: any) { alert(e.message); } finally { setSaving(false); }
+    } catch (e: any) { alert(`L'opération a échoué : ${e.message}`); } finally { setSaving(false); }
   };
 
   return (
@@ -371,18 +592,18 @@ function TestimonialsTab() {
         <div className="mt-6 grid gap-4">
           <TextInput label="Nom du client" value={name} onChange={setName} required />
           <TextInput label="Lieu" value={location} onChange={setLocation} />
-          <div>
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">Témoignage</label>
+          <label className="block">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Témoignage</span>
             <textarea required value={text} onChange={(e) => setText(e.target.value)} rows={4}
               className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none resize-none" />
-          </div>
-          <div>
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">Note</label>
+          </label>
+          <label className="block">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Note</span>
             <select value={rating} onChange={(e) => setRating(Number(e.target.value))}
               className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm">
               {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} étoile{n>1?"s":""}</option>)}
             </select>
-          </div>
+          </label>
         </div>
         <button disabled={saving} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground disabled:opacity-50">
           {saving ? "Ajout…" : "Ajouter"}
@@ -391,13 +612,14 @@ function TestimonialsTab() {
 
       <div>
         <h2 className="font-display text-2xl">Témoignages ({testimonials.length})</h2>
+        <QueryError error={error} />
         <div className="mt-6 space-y-3">
           {(testimonials as any[]).map((t) => (
             <article key={t.id} className={`rounded-xl border p-5 ${t.published ? "border-border bg-card" : "border-primary/40 bg-primary/5"}`}>
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="flex items-start gap-3">
                   {t.photo_url ? (
-                    <img src={t.photo_url} alt={t.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/30" />
+                    <img src={t.photo_url} alt={t.name} loading="lazy" className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/30" />
                   ) : (
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">{t.name.charAt(0).toUpperCase()}</div>
                   )}
@@ -408,12 +630,12 @@ function TestimonialsTab() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={async () => { await updateFn({ data: { id: t.id, published: !t.published } }); invalidate(); }}
-                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs ${t.published ? "border border-border" : "bg-primary text-primary-foreground"}`}>
+                  <button disabled={busy} onClick={() => run(() => updateFn({ data: { id: t.id, published: !t.published } }))}
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs disabled:opacity-50 ${t.published ? "border border-border" : "bg-primary text-primary-foreground"}`}>
                     {t.published ? <><EyeOff className="h-3 w-3" /> Masquer</> : <><Check className="h-3 w-3" /> Approuver</>}
                   </button>
-                  <button onClick={async () => { if (confirm("Supprimer ?")) { await delFn({ data: { id: t.id } }); invalidate(); } }}
-                    className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1.5 text-xs text-destructive">
+                  <button disabled={busy} onClick={() => run(() => delFn({ data: { id: t.id } }), "Supprimer ce témoignage et sa photo ?")}
+                    className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1.5 text-xs text-destructive disabled:opacity-50">
                     <Trash2 className="h-3 w-3" /> Supprimer
                   </button>
                 </div>
@@ -433,65 +655,76 @@ const STATUS_LABELS: Record<string, string> = {
   nouveau: "Nouveau", en_cours: "En cours", expedie: "Expédié", livre: "Livré", annule: "Annulé",
 };
 
+// Orders store the items and the total paid (delivery included since the server
+// computes it); the delivery fee is the difference. Older orders have no fee here.
+function orderAmounts(o: { items: any[]; total: number | string }) {
+  const subtotal = (o.items ?? []).reduce((s, it) => s + Number(it.price) * Number(it.qty), 0);
+  const total = Number(o.total);
+  return { subtotal, delivery: Math.max(0, total - subtotal), total };
+}
+
 function OrdersTab() {
   const qc = useQueryClient();
   const listFn = useServerFn(listOrders);
   const statusFn = useServerFn(updateOrderStatus);
   const delFn = useServerFn(deleteOrder);
-  const { data: orders = [] } = useQuery({ queryKey: ["admin-orders"], queryFn: () => listFn() });
-
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-orders"] });
+  const { data: orders = [], error } = useQuery({ queryKey: ["admin-orders"], queryFn: () => listFn() });
+  const { busy, run } = useAdminAction(() => qc.invalidateQueries({ queryKey: ["admin-orders"] }));
 
   return (
     <div>
       <h2 className="font-display text-2xl">Commandes ({orders.length})</h2>
+      <QueryError error={error} />
       <div className="mt-6 space-y-4">
-        {orders.length === 0 && <p className="text-sm text-muted-foreground">Aucune commande pour l'instant.</p>}
-        {(orders as any[]).map((o) => (
-          <article key={o.id} className="rounded-xl border border-border bg-card p-5">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <h3 className="font-medium">{o.customer_name}</h3>
-                <p className="text-xs text-muted-foreground">
-                  {o.customer_phone} · {o.customer_address}
-                </p>
-                <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("fr-FR")}</p>
+        {!error && orders.length === 0 && <p className="text-sm text-muted-foreground">Aucune commande pour l'instant.</p>}
+        {(orders as any[]).map((o) => {
+          const amounts = orderAmounts(o);
+          return (
+            <article key={o.id} className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 className="font-medium">{o.customer_name} <span className="text-xs text-muted-foreground">· Réf. {orderReference(o.id)}</span></h3>
+                  <p className="text-xs text-muted-foreground">
+                    {o.customer_phone} · {o.customer_address}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("fr-FR")}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold">{formatFcfa(amounts.total)}</span>
+                  <select value={o.status} disabled={busy} aria-label="Statut de la commande"
+                    onChange={(e) => run(() => statusFn({ data: { id: o.id, status: e.target.value as any } }))}
+                    className="rounded-md border border-border bg-background px-2 py-1 text-xs disabled:opacity-50">
+                    {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                  <button disabled={busy} onClick={() => run(() => delFn({ data: { id: o.id } }), "Supprimer cette commande ?")}
+                    aria-label="Supprimer la commande"
+                    className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1.5 text-xs text-destructive disabled:opacity-50">
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold">{Number(o.total).toLocaleString("fr-FR")} FCFA</span>
-                <select value={o.status} onChange={async (e) => { await statusFn({ data: { id: o.id, status: e.target.value as any } }); invalidate(); }}
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs">
-                  {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-                <button onClick={async () => { if (confirm("Supprimer ?")) { await delFn({ data: { id: o.id } }); invalidate(); } }}
-                  className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1.5 text-xs text-destructive">
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-            <ul className="mt-3 space-y-1 text-sm">
-              {(o.items as any[]).map((it, i) => (
-                <li key={i} className="flex justify-between border-t border-border/60 py-1">
-                  <span>{it.name} × {it.qty}</span>
-                  <span className="text-muted-foreground">{Number(it.price * it.qty).toLocaleString("fr-FR")} FCFA</span>
+              <ul className="mt-3 space-y-1 text-sm">
+                {(o.items as any[]).map((it, i) => (
+                  <li key={i} className="flex justify-between border-t border-border/60 py-1">
+                    <span>{it.name} × {it.qty}</span>
+                    <span className="text-muted-foreground">{formatFcfa(Number(it.price) * Number(it.qty))}</span>
+                  </li>
+                ))}
+                {amounts.delivery > 0 && (
+                  <li className="flex justify-between border-t border-border/60 py-1">
+                    <span>Livraison</span>
+                    <span className="text-muted-foreground">{formatFcfa(amounts.delivery)}</span>
+                  </li>
+                )}
+                <li className="flex justify-between border-t border-border py-1 font-medium">
+                  <span>{amounts.delivery > 0 ? "Total TTC" : "Total"}</span>
+                  <span>{formatFcfa(amounts.total)}</span>
                 </li>
-              ))}
-            </ul>
-          </article>
-        ))}
+              </ul>
+            </article>
+          );
+        })}
       </div>
-    </div>
-  );
-}
-
-/* =================== SHARED =================== */
-
-function TextInput({ label, value, onChange, type = "text", required }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean }) {
-  return (
-    <div>
-      <label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</label>
-      <input type={type} value={value} required={required} onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none" />
     </div>
   );
 }

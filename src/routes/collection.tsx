@@ -1,25 +1,32 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listProducts, type Product } from "@/lib/products.functions";
 import { ProductImage } from "@/components/ProductImage";
+import { AddToCartButtons } from "@/components/AddToCartButtons";
+import { formatFcfa } from "@/lib/order-logic";
+import { pageHead, productListJsonLd, withJsonLd } from "@/lib/seo";
 import { useMemo, useState } from "react";
-import { useCart } from "@/lib/cart";
 
 export const Route = createFileRoute("/collection")({
-  head: () => ({
-    meta: [
-      { title: "Collection — King Dev Shop" },
-      { name: "description", content: "Découvrez toute la collection de draps royaux King Dev Shop." },
-    ],
-  }),
+  // Loaded on the server so the HTML sent to Google already lists the products.
+  loader: async () => ({ products: await listProducts().catch(() => [] as Product[]) }),
+  head: ({ loaderData }) => {
+    const head = pageHead({
+      title: "Collection de draps et parures — King Dev Shop",
+      description: "Toute la collection King Dev Shop : parures de draps 2 places, 4 et 6 pièces, de 8 500 à 13 000 FCFA. Livraison partout en Côte d'Ivoire.",
+      path: "/collection",
+    });
+    const products = loaderData?.products ?? [];
+    return products.length ? withJsonLd(head, productListJsonLd(products)) : head;
+  },
   component: Collection,
 });
 
 function Collection() {
+  const initial = Route.useLoaderData();
   const fetchFn = useServerFn(listProducts);
-  const { data: products = [], isLoading } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn() });
-  const { add, setOpen: setCartOpen } = useCart();
+  const { data: products = [], isLoading } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn(), initialData: initial.products, staleTime: 30_000 });
   const [active, setActive] = useState<string>("Tous");
 
   const filters = useMemo<string[]>(() => ["Tous", ...Array.from(new Set(products.map((p: Product) => p.collection)))], [products]);
@@ -42,6 +49,7 @@ function Collection() {
             <button
               key={f}
               onClick={() => setActive(f)}
+              aria-pressed={active === f}
               className={`rounded-full border px-5 py-2 text-sm transition-colors ${
                 active === f ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary"
               }`}
@@ -58,33 +66,23 @@ function Collection() {
         <p className="mt-16 text-center text-muted-foreground">Aucun produit dans cette collection.</p>
       ) : (
         <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((p: Product) => (
+          {items.map((p: Product, index: number) => (
             <article key={p.id} className="group">
-              <div className="relative overflow-hidden rounded-lg bg-white aspect-[4/3]">
-                <ProductImage src={p.image_url} alt={p.name} className="h-full w-full object-contain p-2 transition-transform duration-700 group-hover:scale-[1.03]" />
+              <Link to="/produit/$id" params={{ id: p.id }} className="relative block overflow-hidden rounded-lg bg-white aspect-[4/3]">
+                <ProductImage src={p.image_url} alt={p.name} priority={index < 3} className="h-full w-full object-contain p-2 transition-transform duration-700 group-hover:scale-[1.03]" />
                 <span className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[10px] uppercase tracking-wider text-primary">{p.collection}</span>
-              </div>
+                {!p.in_stock && (
+                  <span className="absolute right-3 top-3 rounded-full bg-destructive px-3 py-1 text-[10px] uppercase tracking-wider text-white">Rupture de stock</span>
+                )}
+              </Link>
               <div className="mt-5">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-display text-xl">{p.name}</h3>
-                  <span className="text-sm font-medium whitespace-nowrap">{Number(p.price).toLocaleString("fr-FR")} FCFA</span>
+                  <h2 className="font-display text-xl"><Link to="/produit/$id" params={{ id: p.id }} className="hover:text-primary">{p.name}</Link></h2>
+                  <span className="text-sm font-medium whitespace-nowrap">{formatFcfa(p.price)}</span>
                 </div>
                 {p.material && <p className="mt-1 text-sm text-muted-foreground">{p.material}</p>}
                 {p.description && <p className="mt-2 text-sm text-muted-foreground/80">{p.description}</p>}
-                <div className="mt-4 flex flex-col gap-2">
-                  <button
-                    onClick={() => add(p)}
-                    className="w-full rounded-full border border-primary py-3 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
-                  >
-                    🛒 Ajouter au panier
-                  </button>
-                  <button
-                    onClick={() => { add(p); setCartOpen(true); }}
-                    className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition hover:translate-y-[-1px]"
-                  >
-                    ⚡ Commander
-                  </button>
-                </div>
+                <AddToCartButtons product={p} />
               </div>
             </article>
           ))}

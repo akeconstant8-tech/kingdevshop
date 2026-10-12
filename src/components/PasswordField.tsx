@@ -14,7 +14,7 @@ type Props = {
  * Champ mot de passe sécurisé :
  * - bouton œil afficher / masquer
  * - bouton œil désactivé pendant la saisie (champ focus)
- * - bloque copier / couper / coller / menu contextuel / autocomplétion / correcteur
+ * - bloque copier / couper (le coller reste permis pour les gestionnaires de mots de passe)
  */
 export function PasswordField({
   label,
@@ -42,10 +42,8 @@ export function PasswordField({
           onBlur={() => setFocused(false)}
           onCopy={block}
           onCut={block}
-          onPaste={block}
           onContextMenu={block}
           onDrag={block}
-          onDrop={block}
           autoComplete={autoComplete}
           spellCheck={false}
           autoCorrect="off"

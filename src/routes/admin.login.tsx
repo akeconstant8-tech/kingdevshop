@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Crown } from "lucide-react";
@@ -10,11 +10,9 @@ export const Route = createFileRoute("/admin/login")({
 });
 
 function AdminLogin() {
-  const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [mode, setMode] = useState<"login" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,15 +28,7 @@ function AdminLogin() {
         throw new Error("Adresse email invalide : utilisez .com et non .comm.");
       }
 
-      if (mode === "signup") {
-        if (password !== confirm) throw new Error("Les mots de passe ne correspondent pas.");
-        const { error } = await supabase.auth.signUp({
-          email: normalizedEmail, password,
-          options: { emailRedirectTo: window.location.origin + "/admin" },
-        });
-        if (error) throw error;
-        navigate({ to: "/admin" });
-      } else if (mode === "forgot") {
+      if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
           redirectTo: window.location.origin + "/reset-password",
         });
@@ -46,7 +36,9 @@ function AdminLogin() {
         setInfo("Email de réinitialisation envoyé. Vérifiez votre boîte de réception.");
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
-        if (error) throw error;
+        if (error) {
+          throw new Error(/invalid login credentials/i.test(error.message) ? "Email ou mot de passe incorrect." : error.message);
+        }
         if (!data.session) throw new Error("Session non créée. Réessayez.");
         window.location.assign("/admin");
       }
@@ -68,7 +60,6 @@ function AdminLogin() {
         </h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">
           {mode === "login" && "Connectez-vous pour gérer la boutique"}
-          {mode === "signup" && "Créer le compte administrateur"}
           {mode === "forgot" && "Entrez votre email pour recevoir un lien de réinitialisation"}
         </p>
 
@@ -81,7 +72,7 @@ function AdminLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
-              placeholder="komlandavid98@gmail.com"
+              placeholder="vous@exemple.com"
               className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:border-primary outline-none"
             />
           </div>
@@ -92,25 +83,15 @@ function AdminLogin() {
                 label="Mot de passe"
                 value={password}
                 onChange={setPassword}
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                autoComplete="current-password"
               />
-              {mode === "signup" && (
-                <PasswordField
-                  label="Confirmer le mot de passe"
-                  value={confirm}
-                  onChange={setConfirm}
-                  autoComplete="new-password"
-                />
-              )}
-              {mode === "login" && (
-                <button
-                  type="button"
-                  onClick={() => { setMode("forgot"); reset(); }}
-                  className="text-xs text-primary hover:underline"
-                >
-                  Mot de passe oublié ?
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => { setMode("forgot"); reset(); }}
+                className="text-xs text-primary hover:underline"
+              >
+                Mot de passe oublié ?
+              </button>
             </>
           )}
 
@@ -118,17 +99,13 @@ function AdminLogin() {
           {info && <p className="text-sm text-primary">{info}</p>}
 
           <button disabled={loading} className="w-full rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50">
-            {loading ? "..." : mode === "login" ? "Se connecter" : mode === "signup" ? "Créer le compte" : "Envoyer le lien"}
+            {loading ? "..." : mode === "login" ? "Se connecter" : "Envoyer le lien"}
           </button>
         </form>
 
-        {mode === "forgot" ? (
+        {mode === "forgot" && (
           <button onClick={() => { setMode("login"); reset(); }} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
             ← Retour à la connexion
-          </button>
-        ) : (
-          <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); reset(); setConfirm(""); }} className="mt-6 w-full text-center text-xs text-muted-foreground hover:text-primary">
-            {mode === "login" ? "Première fois ? Créer le compte admin" : "Déjà un compte ? Se connecter"}
           </button>
         )}
 

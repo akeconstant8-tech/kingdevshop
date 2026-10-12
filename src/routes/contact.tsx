@@ -3,13 +3,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import { createMessage } from "@/lib/admin.functions";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
-  head: () => ({
-    meta: [
-      { title: "Contact — King Dev Shop" },
-      { name: "description", content: "Contactez la maison King Dev Shop pour toute question ou commande sur-mesure." },
-    ],
+  head: () => pageHead({
+    title: "Contact — King Dev Shop",
+    description: "Contactez King Dev Shop à Bonoua (Carrefour 8 kilos) : WhatsApp +225 07 11 25 76 55, email ou formulaire. Commandes et livraison partout en Côte d'Ivoire.",
+    path: "/contact",
   }),
   component: Contact,
 });

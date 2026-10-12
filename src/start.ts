@@ -1,4 +1,4 @@
-import { createStart, createMiddleware } from "@tanstack/react-start";
+import { createStart, createMiddleware, createCsrfMiddleware } from "@tanstack/react-start";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 import { renderErrorPage } from "./lib/error-page";
@@ -18,7 +18,13 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+// Server functions are same-origin RPC endpoints: refuse calls coming from other sites
+// (Sec-Fetch-Site / Origin / Referer checks).
+const csrfMiddleware = createCsrfMiddleware({
+  filter: (ctx) => ctx.handlerType === "serverFn",
+});
+
 export const startInstance = createStart(() => ({
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [csrfMiddleware, errorMiddleware],
   functionMiddleware: [attachSupabaseAuth],
 }));

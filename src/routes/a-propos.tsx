@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import aboutHero from "@/assets/about-hero.jpg";
 import logo from "@/assets/logo-kingdevshop.png";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/a-propos")({
-  head: () => ({
-    meta: [
-      { title: "À propos — King Dev Shop" },
-      { name: "description", content: "King Dev Shop, boutique en ligne à Bonoua, parures de draps 6 et 4 pièces livrées partout en Côte d'Ivoire." },
-    ],
+  head: () => pageHead({
+    title: "À propos — King Dev Shop, linge de lit à Bonoua",
+    description: "King Dev Shop, boutique en ligne à Bonoua : parures de draps 2 places, 4 et 6 pièces livrées partout en Côte d'Ivoire.",
+    path: "/a-propos",
   }),
   component: About,
 });

@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Product } from "@/lib/products.functions";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listProducts, type Product } from "@/lib/products.functions";
 
 export type CartItem = {
   id: string;
@@ -7,13 +9,17 @@ export type CartItem = {
   price: number;
   image_url: string | null;
   qty: number;
+  // Deleted from the catalog or out of stock: shown but cannot be ordered.
+  unavailable?: boolean;
 };
 
 type CartCtx = {
   items: CartItem[];
   count: number;
   total: number;
+  hasUnavailable: boolean;
   add: (p: Product) => void;
+  buyNow: (p: Product) => void;
   remove: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   clear: () => void;
@@ -23,9 +29,6 @@ type CartCtx = {
 
 const Ctx = createContext<CartCtx | null>(null);
 const STORAGE_KEY = "kds_cart_v1";
-
-// WhatsApp number — format international, sans + ni espaces.
-export const WHATSAPP_NUMBER = "2250711257655";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -41,15 +44,56 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    if (!hydrated) return;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {}
   }, [items, hydrated]);
 
+  // The cart is stored in the browser and can be days old: keep each line in sync with
+  // the live catalog (current price, name and image) and flag products that were
+  // deleted or went out of stock.
+  const listFn = useServerFn(listProducts);
+  const { data: catalog } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => listFn(),
+    enabled: hydrated && items.length > 0,
+    staleTime: 30_000,
+  });
+  useEffect(() => {
+    if (!catalog) return;
+    const byId = new Map(catalog.map((p) => [p.id, p]));
+    setItems((prev) => {
+      let changed = false;
+      const next = prev.map((i) => {
+        const p = byId.get(i.id);
+        const synced: CartItem = p
+          ? { ...i, name: p.name, price: Number(p.price), image_url: p.image_url, unavailable: !p.in_stock }
+          : { ...i, unavailable: true };
+        if (synced.name !== i.name || synced.price !== i.price || synced.image_url !== i.image_url || synced.unavailable !== i.unavailable) {
+          changed = true;
+        }
+        return synced;
+      });
+      return changed ? next : prev;
+    });
+  }, [catalog]);
+
   const add = (p: Product) => {
+    if (!p.in_stock) return;
     setItems((prev) => {
       const found = prev.find((i) => i.id === p.id);
       if (found) return prev.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
       return [...prev, { id: p.id, name: p.name, price: Number(p.price), image_url: p.image_url, qty: 1 }];
     });
+  };
+  // "Commander": make sure the product is in the cart (without adding a second one)
+  // and open the cart to finish the order.
+  const buyNow = (p: Product) => {
+    if (!p.in_stock) return;
+    setItems((prev) =>
+      prev.some((i) => i.id === p.id)
+        ? prev
+        : [...prev, { id: p.id, name: p.name, price: Number(p.price), image_url: p.image_url, qty: 1 }],
+    );
     setOpen(true);
   };
   const remove = (id: string) => setItems((p) => p.filter((i) => i.id !== id));
@@ -57,11 +101,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((p) => (qty <= 0 ? p.filter((i) => i.id !== id) : p.map((i) => (i.id === id ? { ...i, qty } : i))));
   const clear = () => setItems([]);
 
+  const available = items.filter((i) => !i.unavailable);
   const count = items.reduce((s, i) => s + i.qty, 0);
-  const total = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const total = available.reduce((s, i) => s + i.qty * i.price, 0);
+  const hasUnavailable = available.length !== items.length;
 
   return (
-    <Ctx.Provider value={{ items, count, total, add, remove, setQty, clear, open, setOpen }}>
+    <Ctx.Provider value={{ items, count, total, hasUnavailable, add, buyNow, remove, setQty, clear, open, setOpen }}>
       {children}
     </Ctx.Provider>
   );
@@ -72,50 +118,3 @@ export function useCart() {
   if (!c) throw new Error("useCart must be used within CartProvider");
   return c;
 }
-
-export type CustomerInfo = { name: string; phone: string; address: string };
-
-export const DELIVERY_OPTIONS: { city: string; fee: number }[] = [
-  { city: "Grand-Bassam", fee: 3000 },
-  { city: "Anyama", fee: 2500 },
-  { city: "Abobo", fee: 2000 },
-  { city: "Cocody", fee: 2000 },
-  { city: "Bingerville", fee: 2000 },
-  { city: "Adjamé", fee: 1500 },
-  { city: "Marcory", fee: 1500 },
-  { city: "Treichville", fee: 1500 },
-  { city: "Koumassi", fee: 1500 },
-  { city: "Port-Bouët", fee: 2000 },
-  { city: "Attécoubé", fee: 1500 },
-  { city: "Plateau", fee: 2000 },
-];
-
-export function buildWhatsAppLink(
-  items: CartItem[],
-  subtotal: number,
-  customer: CustomerInfo,
-  delivery: { city: string; fee: number },
-) {
-  const grand = subtotal + delivery.fee;
-  const lines = [
-    "*Nouvelle commande — King Dev Shop* 🛏️",
-    "",
-    "*Client :*",
-    `• Nom : ${customer.name}`,
-    `• Téléphone : ${customer.phone}`,
-    `• Adresse : ${customer.address}`,
-    `• Ville de livraison : ${delivery.city}`,
-    "",
-    "*Articles :*",
-    ...items.map((i) => `• ${i.name} × ${i.qty} — ${(i.price * i.qty).toLocaleString("fr-FR")} FCFA`),
-    "",
-    `Sous-total : ${subtotal.toLocaleString("fr-FR")} FCFA`,
-    `Livraison (${delivery.city}) : ${delivery.fee.toLocaleString("fr-FR")} FCFA`,
-    `*Total TTC : ${grand.toLocaleString("fr-FR")} FCFA*`,
-    "",
-    "Merci de me confirmer la disponibilité.",
-  ];
-  const text = encodeURIComponent(lines.join("\n"));
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
-}
-

@@ -4,28 +4,50 @@ import { useQuery } from "@tanstack/react-query";
 import heroBed from "@/assets/drap-5.jpg";
 import logo from "@/assets/logo-kingdevshop.png";
 import { listProducts, type Product } from "@/lib/products.functions";
-import { getSiteContent } from "@/lib/admin.functions";
+import { getSiteContent, listPublicTestimonials } from "@/lib/admin.functions";
 import { ArrowRight, Sparkles, ShieldCheck, Truck, Star } from "lucide-react";
 import { ProductImage } from "@/components/ProductImage";
-import { useCart } from "@/lib/cart";
+import { AddToCartButtons } from "@/components/AddToCartButtons";
+import { formatFcfa } from "@/lib/order-logic";
+import { pageHead, storeJsonLd, withJsonLd } from "@/lib/seo";
+
+const FALLBACK_TESTIMONIALS = [
+  { name: "Peniel Djimi", text: "Shalom Homme de Dieu, j'ai reçu le colis, les couleurs sont bien jolies, je suis satisfaite." },
+  { name: "Kelly Kouame", text: "...l'expédition qui est arrivé à Bouaké et tout y est à l'intérieur encore merci pour la considération et la confiance." },
+  { name: "Pierre Ettien", text: "J'ai été livré. Si je rentre, je te fais un retour sur la qualité. Shalom." },
+];
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "King Dev Shop — Linge de lit pour un sommeil réparateur" },
-      { name: "description", content: "Draps haut de gamme. Un sommeil doux et réparateur avec King Dev Shop." },
-    ],
-  }),
+  // Data is loaded on the server so the HTML sent to Google already lists the products.
+  loader: async () => {
+    const [products, content, testimonials] = await Promise.all([
+      listProducts().catch(() => [] as Product[]),
+      getSiteContent().catch(() => ({}) as Record<string, string>),
+      listPublicTestimonials().catch(() => []),
+    ]);
+    return { products, content, testimonials };
+  },
+  head: () => {
+    const head = pageHead({
+      title: "King Dev Shop — Linge de lit pour un sommeil réparateur",
+      description: "Parures de draps 2 places, 4 et 6 pièces dès 8 500 FCFA. Livraison rapide partout en Côte d'Ivoire, commande simple sur WhatsApp.",
+      path: "/",
+    });
+    return withJsonLd(head, storeJsonLd());
+  },
   component: Home,
 });
 
 function Home() {
+  const initial = Route.useLoaderData();
   const fetchFn = useServerFn(listProducts);
   const contentFn = useServerFn(getSiteContent);
-  const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn() });
-  const { data: content = {} } = useQuery({ queryKey: ["site-content"], queryFn: () => contentFn() });
-  const { add, setOpen: setCartOpen } = useCart();
+  const testimonialsFn = useServerFn(listPublicTestimonials);
+  const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => fetchFn(), initialData: initial.products, staleTime: 30_000 });
+  const { data: content = {} } = useQuery({ queryKey: ["site-content"], queryFn: () => contentFn(), initialData: initial.content, staleTime: 30_000 });
+  const { data: testimonials = [] } = useQuery({ queryKey: ["public-testimonials"], queryFn: () => testimonialsFn(), initialData: initial.testimonials, staleTime: 30_000 });
   const featured = products.slice(0, 4);
+  const shownTestimonials = testimonials.length > 0 ? testimonials.slice(0, 3) : FALLBACK_TESTIMONIALS;
   const heroTitle = (content as any).hero_title || "KING DEV SHOP";
   const heroSlogan = (content as any).hero_slogan || "Un sommeil doux et réparateur avec King Dev Shop.";
   const heroDesc = (content as any).hero_description || "Découvrez notre collection de draps confortables, pensés pour transformer chaque nuit en un moment de pur bien-être. 🛏️ ✨";
@@ -80,7 +102,7 @@ function Home() {
           <div className="relative">
             <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-[var(--gradient-royal)] opacity-10 blur-3xl" />
             <div className="relative overflow-hidden rounded-2xl bg-white shadow-[var(--shadow-elegant)] p-6">
-              <img src={heroBed} alt="Parure de lit King Dev Shop" className="h-full w-full object-contain" />
+              <img src={heroBed} alt="Parure de lit King Dev Shop" width={1211} height={880} fetchPriority="high" className="h-full w-full object-contain" />
             </div>
           </div>
         </div>
@@ -127,31 +149,18 @@ function Home() {
           )}
           {featured.map((p: Product) => (
             <article key={p.id} className="group">
-              <div className="relative overflow-hidden rounded-lg bg-white aspect-[4/3] border border-border">
-                <ProductImage src={p.image_url} alt={p.name} className="h-full w-full object-contain p-2 transition-transform duration-700 group-hover:scale-105" />
+              <Link to="/produit/$id" params={{ id: p.id }} className="relative block overflow-hidden rounded-lg bg-white aspect-[4/3] border border-border">
+                <ProductImage src={p.image_url} alt={p.name} sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="h-full w-full object-contain p-2 transition-transform duration-700 group-hover:scale-105" />
                 <span className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[10px] uppercase tracking-wider text-primary">{p.collection}</span>
-              </div>
+              </Link>
               <div className="mt-4 flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-display text-base">{p.name}</h3>
+                  <h3 className="font-display text-base"><Link to="/produit/$id" params={{ id: p.id }} className="hover:text-primary">{p.name}</Link></h3>
                   <p className="text-xs text-muted-foreground">{p.material}</p>
                 </div>
-                <span className="text-sm font-semibold whitespace-nowrap text-primary">{Number(p.price).toLocaleString("fr-FR")} FCFA</span>
+                <span className="text-sm font-semibold whitespace-nowrap text-primary">{formatFcfa(p.price)}</span>
               </div>
-              <div className="mt-3 flex flex-col gap-2">
-                <button
-                  onClick={() => add(p)}
-                  className="w-full rounded-full border border-primary py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-primary hover:text-primary-foreground"
-                >
-                  🛒 Ajouter au panier
-                </button>
-                <button
-                  onClick={() => { add(p); setCartOpen(true); }}
-                  className="w-full rounded-full bg-primary py-2.5 text-xs font-semibold uppercase tracking-wider text-primary-foreground shadow-[var(--shadow-soft)] transition hover:translate-y-[-1px]"
-                >
-                  ⚡ Commander
-                </button>
-              </div>
+              <AddToCartButtons product={p} compact className="mt-3" />
             </article>
           ))}
         </div>
@@ -169,11 +178,7 @@ function Home() {
           </Link>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { name: "Peniel Djimi", text: "Shalom Homme de Dieu, j'ai reçu le colis, les couleurs sont bien jolies, je suis satisfaite." },
-            { name: "Kelly Kouame", text: "...l'expédition qui est arrivé à Bouaké et tout y est à l'intérieur encore merci pour la considération et la confiance." },
-            { name: "Pierre Ettien", text: "J'ai été livré. Si je rentre, je te fais un retour sur la qualité. Shalom." },
-          ].map((t) => (
+          {shownTestimonials.map((t) => (
             <div key={t.name} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="flex gap-1 mb-4">
                 {Array.from({ length: 5 }).map((_, i) => (
